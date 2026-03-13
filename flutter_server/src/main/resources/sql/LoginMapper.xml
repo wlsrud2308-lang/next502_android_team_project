@@ -1,0 +1,23 @@
+<insert id="insertNormalUser"
+        
+
+    INSERT INTO normal_user (
+    user_email,
+    user_id,
+    user_pw,
+    user_name,
+    user_tel,
+    user_age,
+    user_role
+    )
+    VALUES (
+    #{userEmail},
+    #{userId},
+    #{userPw},
+    #{name},
+    #{phone},
+    #{age},
+    #{userRole}
+    )
+
+</insert>
