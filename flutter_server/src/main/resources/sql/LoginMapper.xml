@@ -1,23 +1,21 @@
-<insert id="insertNormalUser"
-        
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-    INSERT INTO normal_user (
-    user_email,
-    user_id,
-    user_pw,
-    user_name,
-    user_tel,
-    user_age,
-    user_role
-    )
-    VALUES (
-    #{userEmail},
-    #{userId},
-    #{userPw},
-    #{name},
-    #{phone},
-    #{age},
-    #{userRole}
-    )
+<mapper namespace="bitc.next502.flutter_server.mapper.LoginMapper">
 
-</insert>
+    <insert id="insertNormalUser" parameterType="bitc.next502.flutter_server.dto.UserDTO">
+        INSERT INTO user (
+            email,
+            id,
+            password,
+            nickname,
+        )
+        VALUES (
+            #{email},
+            #{id},
+            #{password},
+            #{nickname},
+        )
+    </insert>
+
+</mapper>

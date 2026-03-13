@@ -22,13 +22,13 @@ public class LoginController {
 
     map.put("email", map.get("email"));
     map.put("password", map.get("password"));
-    map.put("loginId", map.get("loginId"));
+    map.put("id", map.get("id"));
     map.put("nickname", map.get("nickname"));
 
     UserDTO user = new UserDTO();
     user.setEmail(map.get("email"));
     user.setPassword(map.get("password"));
-    user.setLoginId(map.get("loginId"));
+    user.setId(map.get("id"));
     user.setNickname(map.get("nickname"));
 
     loginService.signupUser(user);
