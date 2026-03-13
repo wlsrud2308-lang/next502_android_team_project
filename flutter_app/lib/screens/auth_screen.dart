@@ -38,18 +38,19 @@ class _AuthScreen extends State<AuthScreen> {
 
   // [중요] 스프링 서버(MySQL)에 회원 정보 저장 요청
   Future<void> registerToMySql(String uid, String email, String loginId, String nickname) async {
+    print("스프링 서버로 전송 시작! UID: $uid");
     try {
       // 주소
-      final url = Uri.parse('http://50.239.58.243');
+      final url = Uri.parse('http://58.239.58.243');
 
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "uid": uid,           // 파이어베이스 고유번호
+          "id": uid,           // 파이어베이스 고유번호
           "email": email,
-          "loginId": loginId,   // 사용자 지정 아이디
-          "nickname": nickname, // 닉네임
+          "nickname": nickname,   // 닉네임
+          "password": "", //
         }),
       );
 
