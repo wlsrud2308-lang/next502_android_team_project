@@ -7,10 +7,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class LoginServiceImpl {
+public class LoginServiceImpl implements LoginService {
 
   private final LoginMapper loginMapper;
 
+  @Override
   public void signupUser(UserDTO user) {
+
+    loginMapper.insertUser(user);
+
   }
+
 }

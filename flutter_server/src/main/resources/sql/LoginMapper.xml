@@ -5,16 +5,16 @@
 
     <insert id="insertNormalUser" parameterType="bitc.next502.flutter_server.dto.UserDTO">
         INSERT INTO user (
+            uid,
             email,
-            id,
-            password,
-            nickname,
+            login_id,
+            nickname
         )
         VALUES (
+            #{uid},
             #{email},
-            #{id},
-            #{password},
-            #{nickname},
+            #{loginId},
+            #{nickname}
         )
     </insert>
 

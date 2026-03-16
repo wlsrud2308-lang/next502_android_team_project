@@ -3,36 +3,22 @@ package bitc.next502.flutter_server.controller;
 import bitc.next502.flutter_server.dto.UserDTO;
 import bitc.next502.flutter_server.service.LoginServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
-@Controller
+@RestController
 @RequiredArgsConstructor
+@RequestMapping("/flutter")
 public class LoginController {
 
   private final LoginServiceImpl loginService;
 
-  // 회원가입 처리
-  @PostMapping("/flutter/signup")
-  public Object signupProcess(@RequestBody Map<String, String> map) {
-
-    map.put("email", map.get("email"));
-    map.put("password", map.get("password"));
-    map.put("id", map.get("id"));
-    map.put("nickname", map.get("nickname"));
-
-    UserDTO user = new UserDTO();
-    user.setEmail(map.get("email"));
-    user.setPassword(map.get("password"));
-    user.setId(map.get("id"));
-    user.setNickname(map.get("nickname"));
+  @PostMapping("/signup")
+  public Object signup(@RequestBody UserDTO user){
 
     loginService.signupUser(user);
 
     return user;
+
   }
+
 }
