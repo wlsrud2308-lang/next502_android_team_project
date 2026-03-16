@@ -25,12 +25,11 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreen extends State<AuthScreen> {
-
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://10.100.202.5:8080/flutter',
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
+      baseUrl: 'http://10.0.2.2:8080/flutter', // Android Emulator용
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {
         HttpHeaders.contentTypeHeader: 'application/json',
         HttpHeaders.acceptHeader: 'application/json',
@@ -50,11 +49,7 @@ class _AuthScreen extends State<AuthScreen> {
 
   // MySQL 회원 저장
   Future<void> registerToMySql(
-      String uid,
-      String email,
-      String loginId,
-      String nickname) async {
-
+      String uid, String email, String loginId, String nickname) async {
     try {
       Response res = await _dio.post(
         '/signup',
@@ -70,21 +65,29 @@ class _AuthScreen extends State<AuthScreen> {
         showToast("MySQL 저장 성공");
       }
     } catch (e) {
+      if (e is DioException) {
+        if (e.response != null) {
+          print("서버 상태 코드: ${e.response?.statusCode}");
+          print("서버 응답: ${e.response?.data}");
+          showToast("서버 오류: ${e.response?.statusCode}");
+        } else {
+          showToast("요청 실패: ${e.message}");
+        }
+      } else {
+        showToast("알 수 없는 오류 발생");
+      }
       print("서버 통신 오류 : $e");
-      showToast("서버 연결 실패");
     }
   }
 
   // 로그인
   void signIn() async {
-
     try {
       UserCredential user = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-          email: email,
-          password: password
-      );
+          .signInWithEmailAndPassword(email: email, password: password);
+
       if (user.user!.emailVerified) {
+        if (!mounted) return;
         setState(() {
           isInput = false;
         });
@@ -99,6 +102,7 @@ class _AuthScreen extends State<AuthScreen> {
   // 로그아웃
   void signOut() async {
     await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
     setState(() {
       isInput = true;
     });
@@ -106,26 +110,22 @@ class _AuthScreen extends State<AuthScreen> {
 
   // 회원가입
   void signUp() async {
-
     try {
       UserCredential user = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-          email: email,
-          password: password
-      );
+          .createUserWithEmailAndPassword(email: email, password: password);
+
       if (user.user != null) {
         // 이메일 인증
         await user.user!.sendEmailVerification();
+
         // MySQL 저장
-        await registerToMySql(
-            user.user!.uid,
-            email,
-            loginId,
-            nickname
-        );
+        await registerToMySql(user.user!.uid, email, loginId, nickname);
+
+        if (!mounted) return;
         setState(() {
           isInput = false;
         });
+
         showToast("회원가입 성공! 이메일 인증하세요");
       }
     } on FirebaseAuthException catch (e) {
@@ -145,9 +145,7 @@ class _AuthScreen extends State<AuthScreen> {
       Text(
         isSignIn ? '로그인' : '회원가입',
         style: const TextStyle(
-            color: Colors.indigoAccent,
-            fontWeight: FontWeight.bold,
-            fontSize: 24),
+            color: Colors.indigoAccent, fontWeight: FontWeight.bold, fontSize: 24),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 16),
@@ -195,9 +193,7 @@ class _AuthScreen extends State<AuthScreen> {
         },
         child: Text(isSignIn ? "로그인" : "회원가입"),
       ),
-
       const SizedBox(height: 10),
-
       RichText(
         textAlign: TextAlign.center,
         text: TextSpan(
@@ -212,6 +208,7 @@ class _AuthScreen extends State<AuthScreen> {
                   decoration: TextDecoration.underline),
               recognizer: TapGestureRecognizer()
                 ..onTap = () {
+                  if (!mounted) return;
                   setState(() {
                     isSignIn = !isSignIn;
                   });
@@ -219,19 +216,16 @@ class _AuthScreen extends State<AuthScreen> {
             ),
           ],
         ),
-      )
+      ),
     ];
   }
 
   // 로그인 성공 UI
   List<Widget> getResultWidget() {
-
     String? resultEmail = FirebaseAuth.instance.currentUser?.email;
 
     return [
-      const Icon(Icons.check_circle,
-          size: 80,
-          color: Colors.indigoAccent),
+      const Icon(Icons.check_circle, size: 80, color: Colors.indigoAccent),
       const SizedBox(height: 20),
       Text(
         isSignIn
@@ -245,6 +239,7 @@ class _AuthScreen extends State<AuthScreen> {
           if (isSignIn) {
             signOut();
           } else {
+            if (!mounted) return;
             setState(() {
               isInput = true;
               isSignIn = true;
@@ -264,9 +259,7 @@ class _AuthScreen extends State<AuthScreen> {
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: isInput
-                ? getInputWidget()
-                : getResultWidget(),
+            children: isInput ? getInputWidget() : getResultWidget(),
           ),
         ),
       ),

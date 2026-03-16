@@ -5,6 +5,8 @@ import bitc.next502.flutter_server.mapper.LoginMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class LoginServiceImpl implements LoginService {
@@ -17,5 +19,4 @@ public class LoginServiceImpl implements LoginService {
     loginMapper.insertUser(user);
 
   }
-
 }

@@ -5,6 +5,8 @@ import bitc.next502.flutter_server.service.LoginServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/flutter")
@@ -15,10 +17,11 @@ public class LoginController {
   @PostMapping("/signup")
   public Object signup(@RequestBody UserDTO user){
 
+    System.out.println(user);
+
     loginService.signupUser(user);
 
     return user;
 
   }
-
 }
