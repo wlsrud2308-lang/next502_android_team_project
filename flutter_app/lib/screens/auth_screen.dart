@@ -2,10 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http; // 서버 통신용 패키지 (pubspec.yaml 추가 필수)
-import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
 
-// Toast 메시지 출력 함수
+// Toast 메시지
 void showToast(String msg) {
   Fluttertoast.showToast(
     msg: msg,
@@ -25,198 +25,329 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreen extends State<AuthScreen> {
+
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: 'http://10.100.202.5:8080/flutter',
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+      headers: {
+        HttpHeaders.contentTypeHeader: 'application/json',
+        HttpHeaders.acceptHeader: 'application/json',
+      },
+    ),
+  );
+
   final _formKey = GlobalKey<FormState>();
 
-  // 입력 필드 변수들
   late String email;
   late String password;
-  late String loginId; // 추가: 사용자 아이디
-  late String nickname; // 추가: 닉네임
+  late String loginId;
+  late String nickname;
 
-  bool isInput = true;  // 입력창 출력 여부
-  bool isSignIn = true; // 로그인/회원가입 모드 전환
+  bool isInput = true;
+  bool isSignIn = true;
 
-  // [중요] 스프링 서버(MySQL)에 회원 정보 저장 요청
-  Future<void> registerToMySql(String uid, String email, String loginId, String nickname) async {
-    print("스프링 서버로 전송 시작! UID: $uid");
+  // MySQL 회원 저장
+  Future<void> registerToMySql(
+      String uid,
+      String email,
+      String loginId,
+      String nickname) async {
+
     try {
-      // 주소
-      final url = Uri.parse('http://58.239.58.243');
 
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "id": uid,           // 파이어베이스 고유번호
+      Response res = await _dio.post(
+        '/signup',
+        data: {
+          "uid": uid,
           "email": email,
-          "nickname": nickname,   // 닉네임
-          "password": "", //
-        }),
+          "loginId": loginId,
+          "nickname": nickname
+        },
       );
 
-      if (response.statusCode == 200) {
-        print("MySQL 저장 성공!");
-      } else {
-        print("MySQL 저장 실패: ${response.body}");
+      print("서버 응답 : ${res.data}");
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        showToast("MySQL 저장 성공");
       }
+
     } catch (e) {
-      print("서버 통신 에러: $e");
+
+      print("서버 통신 오류 : $e");
+      showToast("서버 연결 실패");
+
     }
+
   }
 
-  // 로그인 로직
+  // 로그인
   void signIn() async {
+
     try {
-      await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password)
-          .then((value) {
-        if (value.user!.emailVerified) {
-          setState(() { isInput = false; });
-        } else {
-          showToast('이메일 인증을 완료해주세요.');
-        }
-      });
-    } on FirebaseAuthException catch (e) {
-      showToast('이메일 또는 비밀번호를 확인해주세요.');
+
+      UserCredential user = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+          email: email,
+          password: password
+      );
+
+      if (user.user!.emailVerified) {
+
+        setState(() {
+          isInput = false;
+        });
+
+      } else {
+
+        showToast("이메일 인증을 완료해주세요");
+
+      }
+
+    } on FirebaseAuthException {
+
+      showToast("이메일 또는 비밀번호 오류");
+
     }
+
   }
 
-  // 로그아웃 로직
+  // 로그아웃
   void signOut() async {
+
     await FirebaseAuth.instance.signOut();
-    setState(() { isInput = true; });
+
+    setState(() {
+      isInput = true;
+    });
+
   }
 
-  // 회원가입 로직 (Firebase 인증 + MySQL 저장)
+  // 회원가입
   void signUp() async {
+
     try {
-      await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password)
-          .then((value) async {
-        if (value.user != null) {
-          // 1. 파이어베이스 이메일 인증 메일 발송
-          await value.user?.sendEmailVerification();
 
-          // 2. [필살기] 성공 즉시 스프링 서버(MySQL)로 데이터 전송
-          await registerToMySql(value.user!.uid, email, loginId, nickname);
+      UserCredential user = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+          email: email,
+          password: password
+      );
 
-          setState(() { isInput = false; });
-          showToast('회원가입 성공! 이메일 인증 후 로그인하세요.');
-        }
-      });
+      if (user.user != null) {
+
+        // 이메일 인증
+        await user.user!.sendEmailVerification();
+
+        // MySQL 저장
+        await registerToMySql(
+            user.user!.uid,
+            email,
+            loginId,
+            nickname
+        );
+
+        setState(() {
+          isInput = false;
+        });
+
+        showToast("회원가입 성공! 이메일 인증하세요");
+
+      }
+
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') showToast('비밀번호가 너무 취약합니다.');
-      else if (e.code == 'email-already-in-use') showToast('이미 사용 중인 이메일입니다.');
-      else showToast('회원가입 중 오류가 발생했습니다.');
+
+      if (e.code == 'weak-password') {
+
+        showToast("비밀번호가 너무 약합니다");
+
+      } else if (e.code == 'email-already-in-use') {
+
+        showToast("이미 사용중인 이메일");
+
+      } else {
+
+        showToast("회원가입 실패");
+
+      }
+
     }
+
   }
 
-  // 입력 폼 UI
+  // 입력 UI
   List<Widget> getInputWidget() {
+
     return [
+
       Text(
         isSignIn ? '로그인' : '회원가입',
-        style: const TextStyle(color: Colors.indigoAccent, fontWeight: FontWeight.bold, fontSize: 24.0),
+        style: const TextStyle(
+            color: Colors.indigoAccent,
+            fontWeight: FontWeight.bold,
+            fontSize: 24),
         textAlign: TextAlign.center,
       ),
-      const SizedBox(height: 16.0),
+
+      const SizedBox(height: 16),
+
       Form(
         key: _formKey,
         child: Column(
           children: [
-            // 회원가입 시에만 '아이디'와 '닉네임' 필드 노출
+
             if (!isSignIn) ...[
+
               TextFormField(
-                decoration: const InputDecoration(labelText: '아이디', hintText: '사용하실 아이디를 입력하세요'),
-                validator: (value) => (value?.isEmpty ?? true) ? '아이디를 입력하세요' : null,
-                onSaved: (value) => loginId = value ?? '',
+                decoration: const InputDecoration(labelText: "아이디"),
+                validator: (v) => v!.isEmpty ? "아이디 입력" : null,
+                onSaved: (v) => loginId = v!,
               ),
+
               TextFormField(
-                decoration: const InputDecoration(labelText: '닉네임', hintText: '닉네임을 입력하세요'),
-                validator: (value) => (value?.isEmpty ?? true) ? '닉네임을 입력하세요' : null,
-                onSaved: (value) => nickname = value ?? '',
+                decoration: const InputDecoration(labelText: "닉네임"),
+                validator: (v) => v!.isEmpty ? "닉네임 입력" : null,
+                onSaved: (v) => nickname = v!,
               ),
+
             ],
+
             TextFormField(
-              decoration: const InputDecoration(labelText: '이메일', hintText: '이메일을 입력하세요'),
-              validator: (value) => (value?.isEmpty ?? true) ? '이메일을 입력하세요' : null,
-              onSaved: (value) => email = value ?? '',
+              decoration: const InputDecoration(labelText: "이메일"),
+              validator: (v) => v!.isEmpty ? "이메일 입력" : null,
+              onSaved: (v) => email = v!,
             ),
+
             TextFormField(
-              decoration: const InputDecoration(labelText: '비밀번호', hintText: '비밀번호를 입력하세요'),
+              decoration: const InputDecoration(labelText: "비밀번호"),
               obscureText: true,
-              validator: (value) => (value?.isEmpty ?? true) ? '비밀번호를 입력하세요' : null,
-              onSaved: (value) => password = value ?? '',
+              validator: (v) => v!.isEmpty ? "비밀번호 입력" : null,
+              onSaved: (v) => password = v!,
             ),
+
           ],
         ),
       ),
-      const SizedBox(height: 20.0),
+
+      const SizedBox(height: 20),
+
       ElevatedButton(
         onPressed: () {
-          if (_formKey.currentState?.validate() ?? false) {
-            _formKey.currentState?.save();
-            isSignIn ? signIn() : signUp();
+
+          if (_formKey.currentState!.validate()) {
+
+            _formKey.currentState!.save();
+
+            if (isSignIn) {
+              signIn();
+            } else {
+              signUp();
+            }
+
           }
+
         },
-        child: Text(isSignIn ? '로그인' : '회원가입'),
+        child: Text(isSignIn ? "로그인" : "회원가입"),
       ),
-      const SizedBox(height: 10.0),
+
+      const SizedBox(height: 10),
+
       RichText(
         textAlign: TextAlign.center,
         text: TextSpan(
-          text: isSignIn ? '계정이 없으신가요? ' : '이미 계정이 있으신가요? ',
-          style: const TextStyle(color: Colors.black, fontSize: 14),
+          text: isSignIn ? "계정이 없나요? " : "이미 계정이 있나요? ",
+          style: const TextStyle(color: Colors.black),
           children: [
             TextSpan(
-                text: isSignIn ? '회원가입' : '로그인',
-                style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
-                recognizer: TapGestureRecognizer()
-                  ..onTap = () {
-                    setState(() { isSignIn = !isSignIn; });
-                  }
+              text: isSignIn ? "회원가입" : "로그인",
+              style: const TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.underline),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  setState(() {
+                    isSignIn = !isSignIn;
+                  });
+                },
             ),
           ],
         ),
-      ),
+      )
+
     ];
+
   }
 
-  // 결과 화면 UI (로그인/가입 성공 시)
+  // 로그인 성공 UI
   List<Widget> getResultWidget() {
+
     String? resultEmail = FirebaseAuth.instance.currentUser?.email;
+
     return [
-      const Icon(Icons.check_circle, size: 80, color: Colors.indigoAccent),
+
+      const Icon(Icons.check_circle,
+          size: 80,
+          color: Colors.indigoAccent),
+
       const SizedBox(height: 20),
+
       Text(
-        isSignIn ? '$resultEmail님 환영합니다!' : '회원가입 완료!\n인증 메일을 확인해 주세요.',
-        style: const TextStyle(fontWeight: FontWeight.bold),
+        isSignIn
+            ? "$resultEmail 님 환영합니다!"
+            : "회원가입 완료\n메일 인증하세요",
         textAlign: TextAlign.center,
       ),
+
       const SizedBox(height: 20),
+
       ElevatedButton(
         onPressed: () {
-          if (isSignIn) signOut();
-          else setState(() { isInput = true; isSignIn = true; });
+
+          if (isSignIn) {
+            signOut();
+          } else {
+
+            setState(() {
+              isInput = true;
+              isSignIn = true;
+            });
+
+          }
+
         },
-        child: Text(isSignIn ? '로그아웃' : '로그인하러 가기'),
-      ),
+        child: Text(isSignIn ? "로그아웃" : "로그인"),
+      )
+
     ];
+
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Container(
-      padding: const EdgeInsets.all(16.0),
+
+      padding: const EdgeInsets.all(16),
+
       child: Center(
+
         child: SingleChildScrollView(
+
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: isInput ? getInputWidget() : getResultWidget(),
+            children: isInput
+                ? getInputWidget()
+                : getResultWidget(),
           ),
+
         ),
+
       ),
+
     );
+
   }
+
 }
