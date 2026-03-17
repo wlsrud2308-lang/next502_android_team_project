@@ -1,197 +1,188 @@
 import 'package:flutter/material.dart';
 
-class MovieDetailScreen extends StatelessWidget {
-  const MovieDetailScreen({super.key});
+import '../dto/post_dto.dart';
+import '../service/post_service.dart';
+import '../service/post_service_impl.dart';
+
+class DetailScreen extends StatefulWidget {
+  final String postId;
+  const DetailScreen({super.key, required this.postId});
+
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  final PostService _postService = PostServiceImpl();
+  late Future<PostDto> _postFuture;
+
+  static const Color bgDark = Color(0xFF121212);
+  static const Color contentDark = Color(0xFF1E1E1E);
+  static const Color accentPurple = Color(0xFF9D50BB);
+
+  @override
+  void initState() {
+    super.initState();
+    _postFuture = _postService.getPostDetail(widget.postId);
+  }
 
   @override
   Widget build(BuildContext context) {
-    const Color bgDark = Color(0xFF121212);
-    const Color contentDark = Color(0xFF1E1E1E);
-    const Color accentPurple = Color(0xFF9D50BB);
-
     return Scaffold(
       backgroundColor: bgDark,
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
-        title: const Text("해외영화 게시판", style: TextStyle(fontSize: 15, color: Colors.white70)),
+        centerTitle: false,
+        title: const Text("상세보기", style: TextStyle(fontSize: 16, color: Colors.white70)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildDarkPostContent(contentDark),
-            Container(height: 10, color: Colors.black),
+      body: FutureBuilder<PostDto>(
+        future: _postFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: accentPurple));
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("오류가 발생했습니다.", style: const TextStyle(color: Colors.white54)));
+          }
 
-            _buildDarkCommentHeader(),
+          final post = snapshot.data!;
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPostHeader(post),
 
-            _buildDarkCommentItem(
-                author: "영화광_99",
-                content: "이번 영화는 연출이 다했네요. 영상미만으로 볼 가치가 충분합니다.",
-                time: "12:10",
-                depth: 0,
-                cardColor: contentDark
+                _buildPostContent(post),
+
+                _buildReactionSection(post),
+
+                Container(height: 8, color: Colors.black),
+
+                _buildCommentHeader(post.commentCnt),
+
+                const SizedBox(height: 100),
+              ],
             ),
-            _buildDarkCommentItem(
-                author: "시네필",
-                content: "공감합니다. 특히 후반부 롱테이크 씬은 압권이었어요.",
-                time: "12:15",
-                depth: 1,
-                isAuthor: true,
-                cardColor: const Color(0xFF252525)
-            ),
-            _buildDarkCommentItem(
-                author: "영화광_99",
-                content: "맞아요 그 부분 때문에 한 번 더 보러 갈까 고민 중입니다 ㅋㅋ",
-                time: "12:18",
-                depth: 2,
-                cardColor: const Color(0xFF2D2D2D)
-            ),
-            _buildDarkCommentItem(
-                author: "평론가A",
-                content: "저는 오히려 색감이 너무 과하다는 느낌을 받았습니다.",
-                time: "12:30",
-                depth: 0,
-                cardColor: contentDark
-            ),
-            const SizedBox(height: 100),
-          ],
-        ),
+          );
+        },
       ),
-      bottomSheet: _buildDarkCommentInput(bgDark),
     );
   }
 
-  Widget _buildDarkPostContent(Color bgColor) {
+  Widget _buildPostHeader(PostDto post) {
     return Container(
-      width: double.infinity,
-      color: bgColor,
-      padding: const EdgeInsets.all(20.0),
+      color: contentDark,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "오늘 개봉한 [듄: 파트2] 아이맥스 관람 후기",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, height: 1.4),
+          Text(
+            post.title,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, height: 1.3),
           ),
           const SizedBox(height: 15),
           Row(
             children: [
-              const CircleAvatar(radius: 12, backgroundColor: Colors.purple, child: Icon(Icons.person, size: 14, color: Colors.white)),
-              const SizedBox(width: 8),
-              const Text("무비매니아", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
-              const Spacer(),
-              const Text("2026-03-16 12:00", style: TextStyle(color: Colors.grey, fontSize: 12)),
-            ],
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Divider(color: Colors.white10),
-          ),
-          const Text(
-            "방금 아이맥스로 보고 나왔는데 진짜 압도적이네요...\n\n"
-                "한스 짐머의 음악이 극장 전체를 울리는데 전율이 돋았습니다. "
-                "이건 무조건 큰 화면에서 보셔야 해요. 안 그러면 후회합니다.",
-            style: TextStyle(fontSize: 15, height: 1.8, color: Colors.white),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkCommentHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      alignment: Alignment.centerLeft,
-      child: Row(
-        children: [
-          const Icon(Icons.mode_comment_outlined, color: Colors.blueAccent, size: 18),
-          const SizedBox(width: 8),
-          const Text("댓글", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          const SizedBox(width: 6),
-          const Text("15", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkCommentItem({
-    required String author,
-    required String content,
-    required String time,
-    int depth = 0,
-    bool isAuthor = false,
-    required Color cardColor
-  }) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (depth > 0) ...[
-            SizedBox(width: 15.0 * depth),
-            const Icon(Icons.subdirectory_arrow_right, size: 16, color: Colors.grey),
-            const SizedBox(width: 4),
-          ],
-
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(right: 16, bottom: 8, left: 4),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              const CircleAvatar(
+                  radius: 14,
+                  backgroundColor: accentPurple,
+                  child: Icon(Icons.person, size: 16, color: Colors.white)
               ),
-              child: Column(
+              const SizedBox(width: 10),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(author, style: TextStyle(fontSize: 12, color: isAuthor ? Colors.orangeAccent : Colors.white70, fontWeight: FontWeight.bold)),
-                      if (isAuthor) ...[
-                        const SizedBox(width: 4),
-                        const Text("WR", style: TextStyle(fontSize: 9, color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
-                      ],
-                      const Spacer(),
-                      Text(time, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(content, style: const TextStyle(fontSize: 14, color: Colors.white, height: 1.4)),
+                  Text(post.authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text("조회 ${post.viewCnt} · ${post.createdAt}", style: const TextStyle(color: Colors.grey, fontSize: 11)),
                 ],
               ),
-            ),
+            ],
           ),
+          const SizedBox(height: 15),
+          const Divider(color: Colors.white10, thickness: 1),
         ],
       ),
     );
   }
 
-  Widget _buildDarkCommentInput(Color bgColor) {
+  Widget _buildPostContent(PostDto post) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: const Color(0xFF1A1A1A),
+      color: contentDark,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Text(
+        post.content,
+        style: const TextStyle(fontSize: 16, height: 1.8, color: Color(0xFFE0E0E0)),
+      ),
+    );
+  }
+
+
+  Widget _buildReactionSection(PostDto post) {
+    return Container(
+      color: contentDark,
+      padding: const EdgeInsets.symmetric(vertical: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () async {
+              bool success = await _postService.pushLike(widget.postId, 1);
+
+              if (success) {
+                setState(() {
+                  _postFuture = _postService.getPostDetail(widget.postId);
+                });
+                _showMsg("추천되었습니다!");
+              } else {
+                _showMsg("이미 추천한 게시글입니다.");
+              }
+            },
+            child: _reactionButton(Icons.thumb_up_alt, "추천 ${post.likeCnt}", Colors.orangeAccent),
+          ),
+          const SizedBox(width: 15),
+          _reactionButton(Icons.star_border, "스크랩", Colors.blueAccent),
+        ],
+      ),
+    );
+  }
+
+  void _showMsg(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  Widget _reactionButton(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white12),
+      ),
       child: Row(
         children: [
-          Expanded(
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "댓글을 입력하세요...",
-                hintStyle: const TextStyle(color: Colors.white24, fontSize: 14),
-                filled: true,
-                fillColor: Colors.black,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 15),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Icon(Icons.send, color: Colors.blueAccent),
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentHeader(int count) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const Text("댓글", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 8),
+          Text("$count", style: const TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold)),
         ],
       ),
     );

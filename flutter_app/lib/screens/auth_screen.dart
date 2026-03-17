@@ -41,7 +41,6 @@ class _AuthScreen extends State<AuthScreen> {
 
   late String email;
   late String password;
-  late String loginId;
   late String nickname;
 
   bool isInput = true;
@@ -49,14 +48,13 @@ class _AuthScreen extends State<AuthScreen> {
 
   // MySQL 회원 저장
   Future<void> registerToMySql(
-      String uid, String email, String loginId, String nickname) async {
+      String uid, String email, String nickname) async {
     try {
       Response res = await _dio.post(
         '/signup',
         data: {
           "uid": uid,
           "email": email,
-          "loginId": loginId,
           "nickname": nickname
         },
       );
@@ -119,7 +117,7 @@ class _AuthScreen extends State<AuthScreen> {
         await user.user!.sendEmailVerification();
 
         // MySQL 저장
-        await registerToMySql(user.user!.uid, email, loginId, nickname);
+        await registerToMySql(user.user!.uid, email, nickname);
 
         if (!mounted) return;
         setState(() {
@@ -153,18 +151,6 @@ class _AuthScreen extends State<AuthScreen> {
         key: _formKey,
         child: Column(
           children: [
-            if (!isSignIn) ...[
-              TextFormField(
-                decoration: const InputDecoration(labelText: "아이디"),
-                validator: (v) => v!.isEmpty ? "아이디 입력" : null,
-                onSaved: (v) => loginId = v!,
-              ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: "닉네임"),
-                validator: (v) => v!.isEmpty ? "닉네임 입력" : null,
-                onSaved: (v) => nickname = v!,
-              ),
-            ],
             TextFormField(
               decoration: const InputDecoration(labelText: "이메일"),
               validator: (v) => v!.isEmpty ? "이메일 입력" : null,
@@ -176,6 +162,12 @@ class _AuthScreen extends State<AuthScreen> {
               validator: (v) => v!.isEmpty ? "비밀번호 입력" : null,
               onSaved: (v) => password = v!,
             ),
+            if (!isSignIn)
+              TextFormField(
+                decoration: const InputDecoration(labelText: "닉네임"),
+                validator: (v) => v!.isEmpty ? "닉네임 입력" : null,
+                onSaved: (v) => nickname = v!,
+              ),
           ],
         ),
       ),

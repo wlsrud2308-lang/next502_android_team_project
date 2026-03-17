@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="bitc.next502.flutter_server.mapper.MovieMapper">
+
+    <insert id="insertMovie" parameterType="bitc.next502.flutter_server.dto.MovieDTO">
+        INSERT INTO movie (title, release_date, movie_cd, `rank`, rank_inten, rnum, rank_old_and_new)
+        VALUES (#{movieNm}, #{openDt}, #{movieCd}, #{rank}, #{rankInten}, #{rnum}, #{rankOldAndNew})
+    </insert>
+
+    <delete id="deleteAllMovies">
+        TRUNCATE TABLE movie
+    </delete>
+
+    <select id="selectMovieList" resultType="bitc.next502.flutter_server.dto.MovieDTO">
+        SELECT
+            title as movieNm,
+            release_date as openDt,
+            movie_cd as movieCd,
+            `rank`,
+            rank_inten as rankInten,
+            rnum,
+            rank_old_and_new as rankOldAndNew
+        FROM movie
+        ORDER BY CAST(`rank` AS UNSIGNED) ASC
+            LIMIT 10
+    </select>
+</mapper>
