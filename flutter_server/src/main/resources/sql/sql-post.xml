@@ -12,14 +12,27 @@
             p.view_cnt AS viewCnt,
             p.like_cnt AS likeCnt,
             p.created_at AS createdAt,
-            (SELECT COUNT(*)
-             FROM comments c
-             WHERE c.post_id = p.post_id) AS commentCnt  FROM post p
-                                                                  JOIN users u ON p.user_num = u.user_num
+            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.post_id) AS commentCnt,
+            (SELECT COUNT(*) FROM post_like_history
+             WHERE post_id = p.post_id AND user_num = #{userNum}) > 0 AS isLiked
+        FROM post p
+                 JOIN users u ON p.user_num = u.user_num
         WHERE p.post_id = #{postId}
     </select>
 
+    <select id="checkLikeHistory" resultType="int">
+        SELECT COUNT(*) FROM post_like_history
+        WHERE post_id = #{postId} AND user_num = #{userNum}
+    </select>
 
+    <insert id="insertLikeHistory">
+        INSERT INTO post_like_history (post_id, user_num)
+        VALUES (#{postId}, #{userNum})
+    </insert>
+
+    <update id="incrementLikeCount">
+        UPDATE post SET like_cnt = like_cnt + 1 WHERE post_id = #{postId}
+    </update>
 
 
 

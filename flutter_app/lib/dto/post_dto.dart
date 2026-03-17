@@ -9,9 +9,14 @@ class PostDto {
   final String createdAt;
 
   PostDto({
-    required this.postId, required this.title, required this.content,
-    required this.authorName, required this.viewCnt, required this.likeCnt,
-    required this.commentCnt, required this.createdAt,
+    required this.postId,
+    required this.title,
+    required this.content,
+    required this.authorName,
+    required this.viewCnt,
+    required this.likeCnt,
+    required this.commentCnt,
+    required this.createdAt,
   });
 
   factory PostDto.fromJson(Map<String, dynamic> json) {

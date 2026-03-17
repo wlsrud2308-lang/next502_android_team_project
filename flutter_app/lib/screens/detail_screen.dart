@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../dto/post_dto.dart';
 import '../service/post_service.dart';
+import '../service/post_service_impl.dart';
 
 class DetailScreen extends StatefulWidget {
   final String postId;
@@ -15,7 +16,6 @@ class _DetailScreenState extends State<DetailScreen> {
   final PostService _postService = PostServiceImpl();
   late Future<PostDto> _postFuture;
 
-  // 매니아 사이트 테마 컬러
   static const Color bgDark = Color(0xFF121212);
   static const Color contentDark = Color(0xFF1E1E1E);
   static const Color accentPurple = Color(0xFF9D50BB);
@@ -122,6 +122,7 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
+
   Widget _buildReactionSection(PostDto post) {
     return Container(
       color: contentDark,
@@ -129,11 +130,31 @@ class _DetailScreenState extends State<DetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _reactionButton(Icons.thumb_up_off_alt, "추천 ${post.likeCnt}", Colors.orangeAccent),
+          GestureDetector(
+            onTap: () async {
+              bool success = await _postService.pushLike(widget.postId, 1);
+
+              if (success) {
+                setState(() {
+                  _postFuture = _postService.getPostDetail(widget.postId);
+                });
+                _showMsg("추천되었습니다!");
+              } else {
+                _showMsg("이미 추천한 게시글입니다.");
+              }
+            },
+            child: _reactionButton(Icons.thumb_up_alt, "추천 ${post.likeCnt}", Colors.orangeAccent),
+          ),
           const SizedBox(width: 15),
           _reactionButton(Icons.star_border, "스크랩", Colors.blueAccent),
         ],
       ),
+    );
+  }
+
+  void _showMsg(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
     );
   }
 
