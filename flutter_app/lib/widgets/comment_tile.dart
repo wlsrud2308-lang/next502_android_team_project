@@ -4,11 +4,15 @@ import '../models/comment_model.dart';
 class CommentTile extends StatelessWidget {
   final CommentModel comment;
   final String nickname; // 나중에 서버에서 가져올 수도 있음
+  final VoidCallback? onDelete;
+  final Function(String newContent)? onEdit;
 
   const CommentTile({
     super.key,
     required this.comment,
     required this.nickname,
+    this.onDelete,
+    this.onEdit,
   });
 
   String formatTime(DateTime? time) {
@@ -37,23 +41,54 @@ class CommentTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // 닉네임 + 시간
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                nickname,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              // 닉네임 + 시간
+              Row(
+                children: [
+                  Text(nickname, style: const TextStyle(...)),
+                  const SizedBox(width: 8),
+                  Text(formatTime(comment.createdAt), style: const TextStyle(...)),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                formatTime(comment.createdAt),
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
+
+              // 수정/삭제 버튼 (작성자인 경우만 표시 가능)
+              Row(
+                children: [
+                  if (onEdit != null)
+                    GestureDetector(
+                      onTap: () {
+                        // Dialog로 수정 내용 입력 후 onEdit 호출
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            final controller = TextEditingController(text: comment.content);
+                            return AlertDialog(
+                              title: const Text("댓글 수정"),
+                              content: TextField(controller: controller),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    onEdit!(controller.text);
+                                  },
+                                  child: const Text("수정"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      child: const Icon(Icons.edit, size: 18, color: Colors.white54),
+                    ),
+                  const SizedBox(width: 8),
+                  if (onDelete != null)
+                    GestureDetector(
+                      onTap: onDelete,
+                      child: const Icon(Icons.delete, size: 18, color: Colors.white54),
+                    ),
+                ],
               ),
             ],
           ),

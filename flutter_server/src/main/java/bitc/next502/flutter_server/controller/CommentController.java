@@ -16,19 +16,30 @@ public class CommentController {
         this.service = service;
     }
 
-    // 댓글 저장
+    //  댓글 저장
     @PostMapping
     public String insertComment(@RequestBody CommentDTO dto) {
         service.insertComment(dto);
         return "ok";
     }
 
-    // 댓글 조회
-    @GetMapping("/{targetType}/{targetId}")
-    public List<CommentDTO> getComments(
-            @PathVariable String targetType,
-            @PathVariable String targetId
-    ) {
-        return service.getComments(targetType, targetId);
+    //  댓글 조회 (postId 기준으로 변경)
+    @GetMapping("/{postId}")
+    public List<CommentDTO> getComments(@PathVariable int postId) {
+        return service.getComments(postId);
+    }
+
+    //  댓글 수정 추가
+    @PutMapping
+    public String updateComment(@RequestBody CommentDTO dto) {
+        service.updateComment(dto);
+        return "updated";
+    }
+
+    //  댓글 삭제 추가
+    @DeleteMapping
+    public String deleteComment(@RequestBody CommentDTO dto) {
+        service.deleteComment(dto);
+        return "deleted";
     }
 }
