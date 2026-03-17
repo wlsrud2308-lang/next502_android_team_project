@@ -1,9 +1,8 @@
 class CommentModel {
   final int? commentId;
   final String content;
-  final String userNum;
-  final String targetType;
-  final String targetId;
+  final int userNum;
+  final int postId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -11,8 +10,7 @@ class CommentModel {
     this.commentId,
     required this.content,
     required this.userNum,
-    required this.targetType,
-    required this.targetId,
+    required this.postId,
     this.createdAt,
     this.updatedAt,
   });
@@ -22,8 +20,7 @@ class CommentModel {
       commentId: json['commentId'],
       content: json['content'],
       userNum: json['userNum'],
-      targetType: json['targetType'],
-      targetId: json['targetId'].toString(),
+      postId: json['postId'],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -37,8 +34,7 @@ class CommentModel {
     return {
       "content": content,
       "userNum": userNum,
-      "targetType": targetType,
-      "targetId": targetId,
+      "postId": postId,
     };
   }
 }
