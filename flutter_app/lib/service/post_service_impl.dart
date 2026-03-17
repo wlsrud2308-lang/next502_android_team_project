@@ -1,25 +1,46 @@
-import 'package:dio/dio.dart';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../dto/post_dto.dart';
-
-abstract class PostService {
-  Future<PostDto> getPostDetail(String postId);
-}
+import 'post_service.dart';
 
 class PostServiceImpl implements PostService {
-  final Dio _dio = Dio();
-  final String _baseUrl = "http://10.0.2.2:8080/api/posts";
+  final String baseUrl = "http://10.0.2.2:8080";
 
   @override
   Future<PostDto> getPostDetail(String postId) async {
     try {
-      final response = await _dio.get('$_baseUrl/$postId');
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/post/$postId'),
+      );
+
       if (response.statusCode == 200) {
-        return PostDto.fromJson(response.data);
+        final decodedData = jsonDecode(utf8.decode(response.bodyBytes));
+        return PostDto.fromJson(decodedData);
+      } else {
+        throw Exception('게시글 로드 실패: ${response.statusCode}');
       }
-      throw Exception("서버 응답 에러");
     } catch (e) {
-      throw Exception("네트워크 에러: $e");
+      print("getPostDetail 에러: $e");
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> pushLike(String postId, int userNum) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/post/like/$postId?userNum=$userNum'),
+      );
+
+      print("서버 응답 바디: '${response.body}'");
+
+      if (response.statusCode == 200) {
+        return response.body.trim().toLowerCase() == "true";
+      }
+      return false;
+    } catch (e) {
+      print("추천 통신 에러: $e");
+      return false;
     }
   }
 }
