@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class MovieDetailScreen extends StatefulWidget {
-  final Map<String, dynamic>? movieData; // 🚀 Null 허용으로 변경해서 더 안전하게 만듦
+  final Map<String, dynamic>? movieData;
   const MovieDetailScreen({super.key, required this.movieData});
 
   @override
@@ -13,7 +13,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 🚀 만약 데이터 자체가 Null이면 빈 화면 대신 로딩이나 에러 메시지를 띄움
     if (widget.movieData == null) {
       return const Scaffold(
         backgroundColor: Color(0xFF0D0D0D),
@@ -76,7 +75,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // 🚀 모든 위젯에 ?? 연산자를 추가하여 데이터 부재에 대응
   Widget _buildMovieHeader() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -211,7 +209,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           color: Color(0xFF161616),
           border: Border(top: BorderSide(color: Colors.white10))
       ),
-      child: SafeArea( // 🚀 하단 노치 대응
+      child: SafeArea(
         child: Row(
           children: [
             Expanded(
