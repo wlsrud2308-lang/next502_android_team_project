@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="bitc.next502.flutter_server.mapper.MoviesMapper">
+
+    <insert id="insertMovie" parameterType="bitc.next502.flutter_server.dto.MoviesDTO">
+        INSERT INTO movies (
+            id, title, original_title, overview, poster_path, backdrop_path, release_date, category,
+            vote_average, vote_count, popularity, adult, original_language, video,
+            runtime, budget, revenue, status, homepage
+        )
+        VALUES (
+                   #{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate}, #{category},
+                   #{voteAverage}, #{voteCount}, #{popularity}, #{adult}, #{originalLanguage}, #{video},
+                   #{runtime}, #{budget}, #{revenue}, #{status}, #{homepage}
+               )
+            ON DUPLICATE KEY UPDATE
+                                 title = VALUES(title),
+                                 overview = VALUES(overview),
+                                 poster_path = VALUES(poster_path),
+                                 backdrop_path = VALUES(backdrop_path),
+                                 release_date = VALUES(release_date),
+                                 vote_average = VALUES(vote_average),
+                                 vote_count = VALUES(vote_count),
+                                 popularity = VALUES(popularity),
+                                 adult = VALUES(adult),
+                                 original_language = VALUES(original_language),
+                                 video = VALUES(video),
+                                 runtime = VALUES(runtime),
+                                 budget = VALUES(budget),
+                                 revenue = VALUES(revenue),
+                                 status = VALUES(status),
+                                 homepage = VALUES(homepage)
+    </insert>
+
+    <delete id="deleteCategoryMovies" parameterType="String">
+        DELETE FROM movies WHERE category = #{category}
+    </delete>
+
+    <select id="getAllMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
+        SELECT * FROM movies
+    </select>
+
+</mapper>
