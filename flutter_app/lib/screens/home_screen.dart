@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_app/models/kobis_model.dart';
 
 void main() => runApp(const MovieApp());
 
@@ -31,8 +33,51 @@ class MovieHomeScreen extends StatefulWidget {
 
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
   int _selectedCategoryIndex = 1;
-
   final List<String> _categories = ["영화 정보", "해외영화", "국내영화", "OTT", "블루레이", "자유게시판"];
+
+
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: 'http://10.0.2.2:8080',
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+    ),
+  );
+
+  // API 수신 및 스프링부트로 전송
+  Future<void> fetchAndSendBoxOffice() async {
+    try {
+      print("🚀 KOFIC API 호출 시작...");
+      // KOFIC API 호출
+      String kobisKey = "4560a7f48271cc85ea785b96d415149b";
+      String targetDt = "20240316";
+      String kobisUrl = "http://kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json?key=$kobisKey&targetDt=$targetDt";
+
+      Response kobisRes = await Dio().get(kobisUrl);
+
+      // 데이터만 추출
+      DailyBoxOfficeResponse responseData = DailyBoxOfficeResponse.fromJson(jsonData: kobisRes.data);
+      List<DailyBoxOfficeItem> filteredList = responseData.boxOfficeResult.dailyBoxOfficeList;
+
+      // Spring Boot로 보낼 리스트
+      List<Map<String, dynamic>> sendData = filteredList.map((item) => item.toJson()).toList();
+
+      // Spring Boot 서버로 전송 (POST)
+      print("📦 스프링부트로 전송 시작... 데이터 개수: ${sendData.length}");
+
+      Response springRes = await _dio.post(
+        '/flutter/movies',
+        data: sendData,
+      );
+
+      if (springRes.statusCode == 200 || springRes.statusCode == 201) {
+        print("🎉 서버 전송 완벽 성공! 응답: ${springRes.data}");
+      }
+
+    } catch (e) {
+      print("🚨 통신 오류 발생: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +86,12 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         backgroundColor: Colors.deepPurple,
         leading: const Icon(Icons.movie_filter, color: Colors.purpleAccent),
         actions: [
+          //  상단에 API 통신 테스트용 초록색 새로고침(Sync) 버튼을 배치
+          IconButton(
+            icon: const Icon(Icons.sync, color: Colors.greenAccent),
+            onPressed: fetchAndSendBoxOffice,
+          ),
+          // 종료
           IconButton(icon: const Icon(Icons.search, color: Colors.white30), onPressed: () {}),
           IconButton(icon: const Icon(Icons.person_outline, color: Colors.white30), onPressed: () {}),
         ],
@@ -71,9 +122,12 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           ),
         ],
       ),
+
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.purpleAccent,
-        onPressed: () {},
+        onPressed: () {
+          print("게시판 글쓰기 버튼 클릭됨!");
+        },
         child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
