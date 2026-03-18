@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/movies")
@@ -17,14 +18,18 @@ public class MoviesController {
 
   private final MoviesService moviesService;
 
+  @GetMapping("/home")
+  public Map<String, List<MoviesDTO>> home() {
+    return Map.of(
+        "nowPlaying", moviesService.getNowPlayingMovies(),
+        "popular", moviesService.getPopularMovies(),
+        "topRated", moviesService.getTopRatedMovies()
+    );
+  }
+
   @GetMapping
   public List<MoviesDTO> movies(){
     return moviesService.getMovies();
   }
 
-  @PostMapping("/sync")
-  public String syncMovies(){
-    moviesService.updateAllMovies();
-    return "success";
-  }
 }
