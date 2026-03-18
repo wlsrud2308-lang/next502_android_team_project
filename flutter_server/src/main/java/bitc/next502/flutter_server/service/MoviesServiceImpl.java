@@ -24,20 +24,17 @@ public class MoviesServiceImpl implements MoviesService {
 
   @Override
   public void updatePopularMovies() {
-    List<MoviesDTO> movies = fetchMoviesFromTmdb("popular");
-    saveMovies(movies, "popular");
+    updateCategoryMovies("popular");
   }
 
   @Override
   public void updateTopRatedMovies() {
-    List<MoviesDTO> movies = fetchMoviesFromTmdb("top_rated");
-    saveMovies(movies, "top_rated");
+    updateCategoryMovies("top_rated");
   }
 
   @Override
   public void updateNowPlayingMovies() {
-    List<MoviesDTO> movies = fetchMoviesFromTmdb("now_playing");
-    saveMovies(movies, "now_playing");
+    updateCategoryMovies("now_playing");
   }
 
   @Override
@@ -48,7 +45,31 @@ public class MoviesServiceImpl implements MoviesService {
   }
 
   // =========================
-  // TMDB API 호출
+  // 카테고리별 영화 업데이트 (리스트 + 상세 정보)
+  // =========================
+  private void updateCategoryMovies(String category) {
+    List<MoviesDTO> movies = fetchMoviesFromTmdb(category);
+
+    for (MoviesDTO movie : movies) {
+      // 상세 정보 가져오기
+      MoviesDTO details = fetchMovieDetail(movie.getId());
+      if (details != null) {
+        movie.setRuntime(details.getRuntime());
+        movie.setBudget(details.getBudget());
+        movie.setRevenue(details.getRevenue());
+        movie.setHomepage(details.getHomepage());
+        movie.setStatus(details.getStatus());
+        movie.setOriginalLanguage(details.getOriginalLanguage());
+        movie.setAdult(details.getAdult());
+        movie.setVideo(details.getVideo());
+      }
+    }
+
+    saveMovies(movies, category);
+  }
+
+  // =========================
+  // TMDB 리스트 API 호출
   // =========================
   private List<MoviesDTO> fetchMoviesFromTmdb(String category) {
     String url = "https://api.themoviedb.org/3/movie/" + category
@@ -56,6 +77,21 @@ public class MoviesServiceImpl implements MoviesService {
 
     TmdbResponseDTO response = restTemplate.getForObject(url, TmdbResponseDTO.class);
     return response != null ? response.getResults() : List.of();
+  }
+
+  // =========================
+  // TMDB 상세 정보 API 호출
+  // =========================
+  private MoviesDTO fetchMovieDetail(Long movieId) {
+    String url = "https://api.themoviedb.org/3/movie/" + movieId
+        + "?api_key=" + apiKey + "&language=ko-KR";
+
+    try {
+      return restTemplate.getForObject(url, MoviesDTO.class);
+    } catch (Exception e) {
+      System.out.println("상세 정보 가져오기 실패: " + movieId);
+      return null;
+    }
   }
 
   // =========================
