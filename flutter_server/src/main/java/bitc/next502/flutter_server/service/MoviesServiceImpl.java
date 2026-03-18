@@ -20,31 +20,9 @@ public class MoviesServiceImpl implements MoviesService {
   private final RestTemplate restTemplate = new RestTemplate();
   private final String tmdbApiKey = "70572fb9818902f499a53a287d6055b6";
 
-  // ---------------- 조회 ----------------
   @Override
   public List<MoviesDTO> getMovies() {
     return moviesMapper.getAllMovies();
-  }
-
-  @Override
-  public List<MoviesDTO> getNowPlayingMovies() {
-    return moviesMapper.getNowPlayingMovies();
-  }
-
-  @Override
-  public List<MoviesDTO> getPopularMovies() {
-    return moviesMapper.getPopularMovies();
-  }
-
-  @Override
-  public List<MoviesDTO> getTopRatedMovies() {
-    return moviesMapper.getTopRatedMovies();
-  }
-
-  // ---------------- 갱신 ----------------
-  @Override
-  public void updateNowPlayingMovies() {
-    updateCategoryMovies("now_playing");
   }
 
   @Override
@@ -58,10 +36,15 @@ public class MoviesServiceImpl implements MoviesService {
   }
 
   @Override
+  public void updateNowPlayingMovies() {
+    updateCategoryMovies("now_playing");
+  }
+
+  @Override
   public void updateAllMovies() {
-    updateNowPlayingMovies();
     updatePopularMovies();
     updateTopRatedMovies();
+    updateNowPlayingMovies();
   }
 
   @Override
@@ -72,13 +55,6 @@ public class MoviesServiceImpl implements MoviesService {
       for (MoviesDTO movie : movies) {
         MoviesDTO details = fetchMovieDetail(movie.getId());
         applyTmdbDetails(movie, details);
-
-        // 🔥 카테고리 플래그 적용
-        switch (category) {
-          case "now_playing" -> movie.setIsNowPlaying(1);
-          case "popular" -> movie.setIsPopular(1);
-          case "top_rated" -> movie.setIsTopRated(1);
-        }
 
         moviesMapper.insertMovie(movie);
       }
@@ -91,23 +67,9 @@ public class MoviesServiceImpl implements MoviesService {
     List<MoviesDTO> movies = fetchMoviesFromTmdb(category);
     if (movies == null || movies.isEmpty()) return;
 
-    // DB 플래그 초기화
-    switch (category) {
-      case "now_playing" -> moviesMapper.resetNowPlaying();
-      case "popular" -> moviesMapper.resetPopular();
-      case "top_rated" -> moviesMapper.resetTopRated();
-    }
-
     for (MoviesDTO movie : movies) {
       MoviesDTO details = fetchMovieDetail(movie.getId());
       applyTmdbDetails(movie, details);
-
-      // 🔥 카테고리 플래그 세팅
-      switch (category) {
-        case "now_playing" -> movie.setIsNowPlaying(1);
-        case "popular" -> movie.setIsPopular(1);
-        case "top_rated" -> movie.setIsTopRated(1);
-      }
 
       // DB 저장
       moviesMapper.insertMovie(movie);

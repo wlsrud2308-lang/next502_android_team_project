@@ -10,30 +10,18 @@ import java.util.List;
 @Mapper
 public interface MoviesMapper {
 
-  // ---------------- 영화 저장 ----------------
-  void insertMovie(MoviesDTO movie);
+  // 영화 저장
+  void insertMovie(MoviesDTO movie);   // category 필드 없이 MoviesDTO만 전달
 
-  // ---------------- 영화 조회 ----------------
+  // 전체 영화 조회
   List<MoviesDTO> getAllMovies();
 
-  List<MoviesDTO> getNowPlayingMovies();
-
-  List<MoviesDTO> getPopularMovies();
-
-  List<MoviesDTO> getTopRatedMovies();
-
-  // ---------------- 배우/감독 배치 insert ----------------
+  // 배우 배치 insert
   void insertCastBatch(Long movieId, List<CastDTO> castList);
 
+  // 감독/작업자 배치 insert
   void insertCrewBatch(Long movieId, List<CrewDTO> crewList);
 
-  // ---------------- 플래그 초기화 ----------------
-  void resetNowPlaying();
-
-  void resetPopular();
-
-  void resetTopRated();
-
-  // ---------------- 특정 영화 삭제 ----------------
+  // 특정 영화 삭제 (category 대신 movieId 기준)
   void deleteMovieById(Long movieId);
 }

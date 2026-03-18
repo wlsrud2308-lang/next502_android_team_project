@@ -13,18 +13,9 @@ public class MoviesScheduler {
   private final MoviesService moviesService;
 
   @Scheduled(cron = "0 0 */6 * * *", zone = "Asia/Seoul")
-  public void syncNowPlaying() {
-    moviesService.updateNowPlayingMovies();
-  }
-
-  @Scheduled(cron = "0 10 */6 * * *", zone = "Asia/Seoul")
-  public void syncPopular() {
-    moviesService.updatePopularMovies();
-  }
-
-  @Scheduled(cron = "0 20 */6 * * *", zone = "Asia/Seoul")
-  public void syncTopRated() {
-    moviesService.updateTopRatedMovies();
+  public void syncMoviesAutomatically() {
+    moviesService.updateAllMovies();
+    System.out.println("TMDB 영화 데이터 자동 갱신 완료!");
   }
 
 //  @PostConstruct

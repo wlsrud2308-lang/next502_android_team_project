@@ -46,8 +46,4 @@ public class MoviesDTO {
   private List<CastDTO> cast;   // 배우
   private List<CrewDTO> crew;   // 감독 (TMDb만 사용)
 
-  private Integer isNowPlaying;  // now_playing 플래그
-  private Integer isPopular;     // popular 플래그
-  private Integer isTopRated;    // top_rated 플래그
-
 }
