@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_app/screens/detail_screen.dart';
 import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/login_screen.dart';
+import 'package:flutter_app/screens/movie_detail2.dart';
 import 'package:flutter_app/screens/movie_info.dart';
 import 'package:flutter_app/widgets/movie_list_page.dart';
 import 'firebase_options.dart';
@@ -40,8 +41,13 @@ class MyApp extends StatelessWidget {
           }
 
           // 로그인 정보(snapshot.hasData)가 있으면 영화 리스트 화면으로 바로 이동
+          // if (snapshot.hasData) {
+          //   return const DetailScreen(postId: 123,);
+          // }
+
+          // 무비 디테일 스크린 확인용
           if (snapshot.hasData) {
-            return const DetailScreen(postId: 123,);
+            return const MovieDetailScreen2(movieId: 13,);
           }
 
           // 로그인 정보가 없으면 로그인 페이지로!
