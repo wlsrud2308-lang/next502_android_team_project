@@ -82,13 +82,6 @@ class _MovieListPageState extends State<MovieListPage> {
                             ),
                         ],
                       ),
-                      if (movie.homepage != null && movie.homepage!.isNotEmpty)
-                        Text(
-                          movie.homepage!,
-                          style: const TextStyle(
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline),
-                        ),
                     ],
                   ),
                   isThreeLine: true,
