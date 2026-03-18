@@ -40,7 +40,6 @@ class _DetailScreenState extends State<DetailScreen> {
     });
   }
 
-  // --- 게시글 관리 로직 ---
   void _handleEditPost(PostDto post) async {
     final result = await Navigator.push(
       context,
@@ -75,7 +74,6 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
-  // --- 댓글 관리 로직 ---
   Future<void> _handleCommentSubmit() async {
     String text = _commentController.text.trim();
     if (text.isEmpty) return;
@@ -204,7 +202,6 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  // --- UI 헬퍼 함수들 ---
 
   Widget _buildPostHeader(PostDto post) {
     bool isAuthor = post.userNum == _myUserNum;
@@ -295,7 +292,6 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  // ✅ 스크랩 버튼을 지우고 추천 버튼만 남겼습니다.
   Widget _buildReactionSection(PostDto post) {
     return Container(
       color: contentDark,
@@ -315,7 +311,6 @@ class _DetailScreenState extends State<DetailScreen> {
             },
             child: _reactionButton(Icons.thumb_up_alt, "추천 ${post.likeCnt}", Colors.orangeAccent),
           ),
-          // ❌ 스크랩 버튼(Star Icon)과 SizedBox 간격 삭제됨
         ],
       ),
     );
