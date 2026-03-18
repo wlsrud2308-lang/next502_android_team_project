@@ -13,9 +13,11 @@ public class PostController {
 
     private final PostService postService;
 
+
     @GetMapping("/{postId}")
     public ResponseEntity<PostDTO> getPostDetail(@PathVariable("postId") Long postId) {
-        return ResponseEntity.ok(postService.getPostDetail(postId));
+        PostDTO post = postService.getPostDetail(postId);
+        return ResponseEntity.ok(post);
     }
 
     @PostMapping("/like/{postId}")
@@ -24,6 +26,22 @@ public class PostController {
             @RequestParam("userNum") int userNum) {
 
         boolean result = postService.pushLike(postId, userNum);
+        return ResponseEntity.ok(result);
+    }
+
+
+    @PutMapping("/update")
+    public ResponseEntity<Boolean> updatePost(@RequestBody PostDTO postDTO) {
+        boolean result = postService.updatePost(postDTO);
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Boolean> deletePost(
+            @PathVariable("postId") Long postId,
+            @RequestParam("userNum") int userNum) {
+
+        boolean result = postService.deletePost(postId, userNum);
         return ResponseEntity.ok(result);
     }
 }

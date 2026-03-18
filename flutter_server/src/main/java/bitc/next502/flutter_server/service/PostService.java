@@ -6,4 +6,8 @@ public interface PostService {
     PostDTO getPostDetail(Long postId);
 
     boolean pushLike(Long postId, int userNum);
+
+    boolean updatePost(PostDTO postDTO);
+
+    boolean deletePost(Long postId, int userNum);
 }

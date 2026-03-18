@@ -13,7 +13,10 @@ public class PostServiceImpl implements PostService {
     private final PostMapper postMapper;
 
     @Override
+    @Transactional // 조회수 증가와 조회를 하나의 트랜잭션으로 처리
     public PostDTO getPostDetail(Long postId) {
+        postMapper.updateViewCount(postId);
+
         PostDTO post = postMapper.getPostDetail(postId);
 
         if (post == null) {
@@ -22,15 +25,30 @@ public class PostServiceImpl implements PostService {
 
         return post;
     }
+
+    @Override
     @Transactional
     public boolean pushLike(Long postId, int userNum) {
         if (postMapper.checkLikeHistory(postId, userNum) > 0) {
             return false;
         }
 
-
         postMapper.insertLikeHistory(postId, userNum);
         postMapper.incrementLikeCount(postId);
         return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean updatePost(PostDTO postDTO) {
+        int result = postMapper.updatePost(postDTO);
+        return result > 0;
+    }
+
+    @Override
+    @Transactional
+    public boolean deletePost(Long postId, int userNum) {
+        int result = postMapper.deletePost(postId, userNum);
+        return result > 0;
     }
 }

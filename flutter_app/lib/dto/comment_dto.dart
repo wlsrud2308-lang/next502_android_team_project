@@ -5,7 +5,7 @@ class CommentDto {
   final String nickname;
   final String targetType;
   final int targetId;
-  final DateTime? createdAt; // String에서 DateTime?으로 변경
+  final DateTime? createdAt;
 
   CommentDto({
     required this.commentId,
@@ -18,17 +18,38 @@ class CommentDto {
   });
 
   factory CommentDto.fromJson(Map<String, dynamic> json) {
+    int _toInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
     return CommentDto(
-      // 서버(Java)의 필드명이 commentId이므로 정확히 일치시켜야 함
-      commentId: json['commentId'] ?? 0,
-      content: json['content'] ?? '',
-      userNum: json['userNum'] ?? 0,
-      nickname: json['nickname'] ?? '익명',
-      targetType: json['targetType'] ?? '',
-      targetId: json['postId'] ?? 0,
+      commentId: _toInt(json['commentId'] ?? json['comment_id']),
+      content: json['content']?.toString() ?? '',
+
+      userNum: _toInt(json['userNum'] ?? json['user_num'] ?? json['userNumber']),
+
+      nickname: json['nickname']?.toString() ?? '익명',
+      targetType: json['targetType']?.toString() ?? 'POST',
+
+      targetId: _toInt(json['targetId'] ?? json['postId'] ?? json['post_id']),
+
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'commentId': commentId,
+      'content': content,
+      'userNum': userNum,
+      'nickname': nickname,
+      'targetType': targetType,
+      'targetId': targetId,
+    };
   }
 }

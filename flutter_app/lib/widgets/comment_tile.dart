@@ -3,14 +3,12 @@ import '../dto/comment_dto.dart';
 
 class CommentTile extends StatelessWidget {
   final CommentDto comment;
-  final String nickname; // 나중에 서버에서 가져올 수도 있음
   final VoidCallback? onDelete;
   final Function(String newContent)? onEdit;
 
   const CommentTile({
     super.key,
     required this.comment,
-    required this.nickname,
     this.onDelete,
     this.onEdit,
   });
@@ -40,55 +38,37 @@ class CommentTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // 닉네임 + 시간
               Row(
                 children: [
-                  Text(nickname, style: const TextStyle(
+                  Text(
+                    comment.nickname,
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold
-                  )
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  Text(formatTime(comment.createdAt), style: const TextStyle(
+                  Text(
+                    formatTime(comment.createdAt),
+                    style: const TextStyle(
                       color: Colors.white38,
-                  )),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
 
-              // 수정/삭제 버튼 (작성자인 경우만 표시 가능)
               Row(
                 children: [
                   if (onEdit != null)
                     GestureDetector(
-                      onTap: () {
-                        // Dialog로 수정 내용 입력 후 onEdit 호출
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            final controller = TextEditingController(text: comment.content);
-                            return AlertDialog(
-                              title: const Text("댓글 수정"),
-                              content: TextField(controller: controller),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    onEdit!(controller.text);
-                                  },
-                                  child: const Text("수정"),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
+                      onTap: () => _showEditDialog(context),
                       child: const Icon(Icons.edit, size: 18, color: Colors.white54),
                     ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   if (onDelete != null)
                     GestureDetector(
                       onTap: onDelete,
@@ -101,7 +81,6 @@ class CommentTile extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // 댓글 내용
           Text(
             comment.content,
             style: const TextStyle(
@@ -112,6 +91,44 @@ class CommentTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showEditDialog(BuildContext context) {
+    final controller = TextEditingController(text: comment.content);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          title: const Text("댓글 수정", style: TextStyle(color: Colors.white, fontSize: 16)),
+          content: TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: "수정할 내용을 입력하세요",
+              hintStyle: TextStyle(color: Colors.white24),
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF9D50BB))),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("취소", style: TextStyle(color: Colors.white54)),
+            ),
+            TextButton(
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  Navigator.pop(context);
+                  onEdit!(controller.text.trim());
+                }
+              },
+              child: const Text("수정", style: TextStyle(color: Color(0xFF9D50BB), fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

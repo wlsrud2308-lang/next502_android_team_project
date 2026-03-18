@@ -8,13 +8,11 @@
             p.post_id AS postId,
             p.title,
             p.content,
-            u.nickname AS authorName,
+            p.user_num AS userNum,  u.nickname AS authorName,
             p.view_cnt AS viewCnt,
             p.like_cnt AS likeCnt,
             p.created_at AS createdAt,
-            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.post_id) AS commentCnt,
-            (SELECT COUNT(*) FROM post_like_history
-             WHERE post_id = p.post_id AND user_num = #{userNum}) > 0 AS isLiked
+            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.post_id) AS commentCnt
         FROM post p
                  JOIN users u ON p.user_num = u.user_num
         WHERE p.post_id = #{postId}
@@ -34,6 +32,22 @@
         UPDATE post SET like_cnt = like_cnt + 1 WHERE post_id = #{postId}
     </update>
 
+    <update id="updateViewCount" parameterType="long">
+        UPDATE post
+        SET view_cnt = view_cnt + 1
+        WHERE post_id = #{postId}
+    </update>
+
+    <delete id="deletePost">
+        DELETE FROM post
+        WHERE post_id = #{postId} AND user_num = #{userNum}
+    </delete>
+
+    <update id="updatePost">
+        UPDATE post
+        SET title = #{title}, content = #{content}
+        WHERE post_id = #{postId} AND user_num = #{userNum}
+    </update>
 
 
 </mapper>
