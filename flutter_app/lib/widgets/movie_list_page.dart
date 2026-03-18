@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/movie.dart';
-import '../services/movie_service.dart';
+import '../service/movie_service.dart';
 
 class MovieListPage extends StatefulWidget {
   const MovieListPage({super.key});

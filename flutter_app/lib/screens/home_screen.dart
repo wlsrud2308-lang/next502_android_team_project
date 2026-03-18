@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_app/models/kobis_model.dart';
 
 void main() => runApp(const MovieApp());
 
@@ -44,40 +43,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     ),
   );
 
-  // API 수신 및 스프링부트로 전송
-  Future<void> fetchAndSendBoxOffice() async {
-    try {
-      print("🚀 KOFIC API 호출 시작...");
-      // KOFIC API 호출
-      String kobisKey = "4560a7f48271cc85ea785b96d415149b";
-      String targetDt = "20240316";
-      String kobisUrl = "http://kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json?key=$kobisKey&targetDt=$targetDt";
-
-      Response kobisRes = await Dio().get(kobisUrl);
-
-      // 데이터만 추출
-      DailyBoxOfficeResponse responseData = DailyBoxOfficeResponse.fromJson(jsonData: kobisRes.data);
-      List<DailyBoxOfficeItem> filteredList = responseData.boxOfficeResult.dailyBoxOfficeList;
-
-      // Spring Boot로 보낼 리스트
-      List<Map<String, dynamic>> sendData = filteredList.map((item) => item.toJson()).toList();
-
-      // Spring Boot 서버로 전송 (POST)
-      print("📦 스프링부트로 전송 시작... 데이터 개수: ${sendData.length}");
-
-      Response springRes = await _dio.post(
-        '/flutter/movies',
-        data: sendData,
-      );
-
-      if (springRes.statusCode == 200 || springRes.statusCode == 201) {
-        print("🎉 서버 전송 완벽 성공! 응답: ${springRes.data}");
-      }
-
-    } catch (e) {
-      print("🚨 통신 오류 발생: $e");
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +54,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           //  상단에 API 통신 테스트용 초록색 새로고침(Sync) 버튼을 배치
           IconButton(
             icon: const Icon(Icons.sync, color: Colors.greenAccent),
-            onPressed: fetchAndSendBoxOffice,
+            onPressed: () {},
           ),
           // 종료
           IconButton(icon: const Icon(Icons.search, color: Colors.white30), onPressed: () {}),
