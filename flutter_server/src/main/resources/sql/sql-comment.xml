@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="bitc.next502.flutter_server.mapper.CommentMapper">
+
+    <insert id="insertComment">
+        INSERT INTO comments (content, user_num, target_type, target_id, created_at)
+        VALUES (#{content}, #{userNum}, #{targetType}, #{targetId}, NOW())
+    </insert>
+
+    <select id="getComments" resultType="bitc.next502.flutter_server.dto.CommentDTO">
+        SELECT
+            c.comment_id AS commentId,
+            c.content,
+            c.user_num AS userNum,
+            u.nickname AS nickname,
+            c.target_type AS targetType,
+            c.target_id AS targetId,
+            c.created_at AS createdAt
+        FROM comments c
+                 JOIN users u ON c.user_num = u.user_num
+        WHERE c.target_type = #{targetType}
+          AND c.target_id = #{targetId}
+        ORDER BY c.created_at DESC
+    </select>
+
+</mapper>

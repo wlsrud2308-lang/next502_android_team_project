@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_app/screens/detail_screen.dart';
 import 'package:flutter_app/screens/login_screen.dart';
+import 'package:flutter_app/screens/movie_info.dart';
 import 'package:flutter_app/widgets/movie_list_page.dart';
 import 'firebase_options.dart';
 import 'models/tmdb_sync_page.dart';
@@ -39,7 +41,7 @@ class MyApp extends StatelessWidget {
 
           // 로그인 정보(snapshot.hasData)가 있으면 영화 리스트 화면으로 바로 이동
           if (snapshot.hasData) {
-            return const MovieListPage();
+            return const DetailScreen(postId: '123',);
           }
 
           // 로그인 정보가 없으면 로그인 페이지로!
@@ -59,7 +61,6 @@ class MainMapScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("부산 빈티지 맵"),
         actions: [
-          // ✅ TMDB 강제 동기화 버튼
           IconButton(
             icon: const Icon(Icons.sync),
             onPressed: () {
@@ -76,7 +77,7 @@ class MainMapScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const MovieListPage()),
+                MaterialPageRoute(builder: (_) => const MovieListScreen()),
               );
             },
           ),

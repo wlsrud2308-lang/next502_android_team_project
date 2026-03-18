@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../dto/comment_dto.dart';
 import '../dto/post_dto.dart';
 import 'post_service.dart';
 
@@ -41,6 +42,29 @@ class PostServiceImpl implements PostService {
     } catch (e) {
       print("추천 통신 에러: $e");
       return false;
+    }
+  }
+  @override
+  Future<List<CommentDto>> getComments(String postId) async {
+    try {
+      final url = '$baseUrl/comments/POST/$postId';
+      print("🚀 댓글 요청 주소: $url");
+
+      final response = await http.get(Uri.parse(url));
+
+      print("📥 서버 응답 코드: ${response.statusCode}");
+      print("📥 서버 응답 데이터: ${response.body}");
+
+      if (response.statusCode == 200) {
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((item) => CommentDto.fromJson(item)).toList();
+      } else {
+        print("❌ 댓글 로드 실패: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("🔥 댓글 통신 에러 발생: $e");
+      return [];
     }
   }
 }
