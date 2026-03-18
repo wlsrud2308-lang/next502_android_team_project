@@ -68,4 +68,22 @@ class PostServiceImpl implements PostService {
       return [];
     }
   }
+  @override
+  Future<bool> insertComment(String content, String postId, int userNum) async {
+    final url = Uri.parse('http://10.0.2.2:8080/comments');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'content': content,
+          'postId': int.parse(postId),
+          'userNum': userNum,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
 }

@@ -5,8 +5,8 @@
 
     <!--  댓글 등록 -->
     <insert id="insertComment">
-        INSERT INTO comments (content, user_num, post_id, created_at)
-        VALUES (#{content}, #{userNum}, #{postId}, NOW())
+        INSERT INTO comments (content, user_num, post_id, target_type, created_at)
+        VALUES (#{content}, #{userNum}, #{postId}, 'POST', NOW())
     </insert>
 
     <!--  댓글 조회 -->

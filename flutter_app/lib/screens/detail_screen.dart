@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../dto/post_dto.dart';
-import '../dto/comment_dto.dart'; // CommentDto import 확인하세요!
+import '../dto/comment_dto.dart';
 import '../service/post_service.dart';
 import '../service/post_service_impl.dart';
 
@@ -33,6 +33,23 @@ class _DetailScreenState extends State<DetailScreen> {
       _postFuture = _postService.getPostDetail(widget.postId);
       _commentsFuture = _postService.getComments(widget.postId);
     });
+  }
+
+  Future<void> _handleCommentSubmit() async {
+    String text = _commentController.text.trim();
+    if (text.isEmpty) return;
+
+    // UserNum 설정하는 곳, 메인 페이지나 다른 기능 추가되면 받아오게 변경
+    bool success = await _postService.insertComment(text, widget.postId, 3);
+
+    if (success) {
+      _commentController.clear();
+      _loadData();
+      _showMsg("댓글이 등록되었습니다.");
+      FocusScope.of(context).unfocus();
+    } else {
+      _showMsg("댓글 등록에 실패했습니다.");
+    }
   }
 
   @override
@@ -70,15 +87,16 @@ class _DetailScreenState extends State<DetailScreen> {
                 Container(height: 8, color: Colors.black),
                 _buildCommentHeader(post.commentCnt),
 
-
                 FutureBuilder<List<CommentDto>>(
                   future: _commentsFuture,
                   builder: (context, commentSnapshot) {
                     if (commentSnapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: CircularProgressIndicator(color: accentPurple),
-                      ));
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(color: accentPurple),
+                        ),
+                      );
                     }
                     if (!commentSnapshot.hasData || commentSnapshot.data!.isEmpty) {
                       return const Padding(
@@ -109,7 +127,11 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget _buildCommentInput() {
     return Container(
       padding: EdgeInsets.only(
-          left: 15, right: 5, top: 10, bottom: MediaQuery.of(context).viewInsets.bottom + 10),
+        left: 15,
+        right: 5,
+        top: 10,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 10,
+      ),
       color: const Color(0xFF1A1A1A),
       child: Row(
         children: [
@@ -128,14 +150,12 @@ class _DetailScreenState extends State<DetailScreen> {
                   borderSide: BorderSide.none,
                 ),
               ),
+              onSubmitted: (_) => _handleCommentSubmit(),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.send, color: accentPurple),
-            onPressed: () async {
-              if (_commentController.text.trim().isEmpty) return;
-              _showMsg("댓글 전송은 API 연결이 필요합니다!");
-            },
+            onPressed: _handleCommentSubmit,
           ),
         ],
       ),
@@ -154,7 +174,8 @@ class _DetailScreenState extends State<DetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(comment.nickname, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(comment.nickname,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
               Text(comment.createdAt.toString(), style: const TextStyle(color: Colors.grey, fontSize: 11)),
             ],
           ),
@@ -172,16 +193,21 @@ class _DetailScreenState extends State<DetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(post.title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, height: 1.3)),
+          Text(post.title,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, height: 1.3)),
           const SizedBox(height: 15),
           Row(
             children: [
-              const CircleAvatar(radius: 14, backgroundColor: accentPurple, child: Icon(Icons.person, size: 16, color: Colors.white)),
+              const CircleAvatar(
+                  radius: 14,
+                  backgroundColor: accentPurple,
+                  child: Icon(Icons.person, size: 16, color: Colors.white)),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(post.authorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(post.authorName,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                   Text("조회 ${post.viewCnt} · ${post.createdAt}", style: const TextStyle(color: Colors.grey, fontSize: 11)),
                 ],
               ),
@@ -230,6 +256,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _showMsg(String text) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
     );
