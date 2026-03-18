@@ -9,11 +9,11 @@
     <insert id="insertMovie" parameterType="bitc.next502.flutter_server.dto.MoviesDTO">
         INSERT INTO movies (
             id, title, original_title, overview, poster_path, backdrop_path, release_date,
-            vote_average, vote_count, popularity, original_language, runtime, movie_cd, audience_count
+            vote_average, vote_count, popularity, original_language, runtime
         )
         VALUES (
                    #{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate},
-                   #{voteAverage}, #{voteCount}, #{popularity}, #{originalLanguage}, #{runtime}, #{movieCd}, #{audienceCount}
+                   #{voteAverage}, #{voteCount}, #{popularity}, #{originalLanguage}, #{runtime}
                )
             ON DUPLICATE KEY UPDATE
                                  title = VALUES(title),
@@ -26,9 +26,7 @@
                                  vote_count = VALUES(vote_count),
                                  popularity = VALUES(popularity),
                                  original_language = VALUES(original_language),
-                                 runtime = VALUES(runtime),
-                                 movie_cd = VALUES(movie_cd),
-                                 audience_count = VALUES(audience_count);
+                                 runtime = VALUES(runtime);
     </insert>
 
     <!-- 배우 배치 insert -->

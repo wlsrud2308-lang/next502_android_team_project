@@ -10,10 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +19,6 @@ public class MoviesServiceImpl implements MoviesService {
   private final MoviesMapper moviesMapper;
   private final RestTemplate restTemplate = new RestTemplate();
   private final String tmdbApiKey = "70572fb9818902f499a53a287d6055b6";
-  private final String kobisApiKey = "4560a7f48271cc85ea785b96d415149b";
 
   @Override
   public List<MoviesDTO> getMovies() {
@@ -59,14 +55,14 @@ public class MoviesServiceImpl implements MoviesService {
       for (MoviesDTO movie : movies) {
         MoviesDTO details = fetchMovieDetail(movie.getId());
         applyTmdbDetails(movie, details);
-        integrateKobisData(movie);          // KOBIS 통합
-        moviesMapper.insertMovie(movie);    // category 없이 저장
+
+        moviesMapper.insertMovie(movie);
       }
     }
     System.out.println("모든 영화 movies 테이블 동기화 완료!");
   }
 
-  // ================= TMDb + KOBIS 통합 =================
+  // ================= TMDb + DB 통합 =================
   private void updateCategoryMovies(String category) {
     List<MoviesDTO> movies = fetchMoviesFromTmdb(category);
     if (movies == null || movies.isEmpty()) return;
@@ -74,8 +70,6 @@ public class MoviesServiceImpl implements MoviesService {
     for (MoviesDTO movie : movies) {
       MoviesDTO details = fetchMovieDetail(movie.getId());
       applyTmdbDetails(movie, details);
-
-      integrateKobisData(movie);
 
       // DB 저장
       moviesMapper.insertMovie(movie);
@@ -107,58 +101,7 @@ public class MoviesServiceImpl implements MoviesService {
     target.setVoteAverage(details.getVoteAverage());
     target.setVoteCount(details.getVoteCount());
     target.setPopularity(details.getPopularity());
-  }
-
-  // ================= KOBIS 데이터 통합 =================
-  private void integrateKobisData(MoviesDTO movie) {
-    try {
-      MoviesDTO kobis = fetchKobisMovie(movie.getTitle());
-      if (kobis != null) {
-        movie.setMovieCd(kobis.getMovieCd());
-        movie.setAudienceCount(kobis.getAudienceCount());
-        if (movie.getReleaseDate() == null && kobis.getReleaseDate() != null) {
-          movie.setReleaseDate(kobis.getReleaseDate());
-        }
-      }
-    } catch (Exception e) {
-      System.out.println("KOBIS 데이터 통합 실패: " + movie.getTitle());
-    }
-  }
-
-  private MoviesDTO fetchKobisMovie(String title) {
-    try {
-      String url = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieList.json"
-          + "?key=" + kobisApiKey
-          + "&movieNm=" + URLEncoder.encode(title, StandardCharsets.UTF_8);
-
-      Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-      Map<String, Object> result = (Map<String, Object>) response.get("movieListResult");
-      List<Map<String, Object>> movieList = (List<Map<String, Object>>) result.get("movieList");
-
-      if (movieList != null && !movieList.isEmpty()) {
-        Map<String, Object> first = movieList.get(0);
-        MoviesDTO dto = new MoviesDTO();
-        dto.setMovieCd((String) first.get("movieCd"));
-
-        // 관객수 조회 (별도 API)
-        String infoUrl = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json"
-            + "?key=" + kobisApiKey
-            + "&movieCd=" + dto.getMovieCd();
-
-        Map<String, Object> infoResponse = restTemplate.getForObject(infoUrl, Map.class);
-        Map<String, Object> infoResult = (Map<String, Object>) infoResponse.get("movieInfoResult");
-        Map<String, Object> movieInfo = (Map<String, Object>) infoResult.get("movieInfo");
-
-        if (movieInfo.get("audiAcc") != null) {
-          dto.setAudienceCount(Long.parseLong((String) movieInfo.get("audiAcc")));
-        }
-
-        return dto;
-      }
-    } catch (Exception e) {
-      System.out.println("KOBIS API 호출 실패: " + title + " / " + e.getMessage());
-    }
-    return null;
+    target.setReleaseDate(details.getReleaseDate());
   }
 
   // ================= TMDb API 호출 =================

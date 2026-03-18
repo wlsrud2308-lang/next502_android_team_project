@@ -46,8 +46,4 @@ public class MoviesDTO {
   private List<CastDTO> cast;   // 배우
   private List<CrewDTO> crew;   // 감독 (TMDb만 사용)
 
-  // ===== KOBIS 최소 추가 =====
-  private String movieCd;        // 영화코드
-  private Long audienceCount;    // 누적 관객수
-
 }
