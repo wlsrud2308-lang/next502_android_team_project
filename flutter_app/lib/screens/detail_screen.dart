@@ -3,6 +3,7 @@ import '../dto/post_dto.dart';
 import '../dto/comment_dto.dart';
 import '../service/post_service.dart';
 import '../service/post_service_impl.dart';
+import '../widgets/comment_tile.dart'; // CommentTile 임포트 확인
 
 class DetailScreen extends StatefulWidget {
   final String postId;
@@ -22,6 +23,9 @@ class _DetailScreenState extends State<DetailScreen> {
   static const Color contentDark = Color(0xFF1E1E1E);
   static const Color accentPurple = Color(0xFF9D50BB);
 
+  // 현재 로그인한 사용자 번호 (테스트용으로 3 고정)
+  final int _myUserNum = 3;
+
   @override
   void initState() {
     super.initState();
@@ -35,12 +39,12 @@ class _DetailScreenState extends State<DetailScreen> {
     });
   }
 
+  // 댓글 등록 처리
   Future<void> _handleCommentSubmit() async {
     String text = _commentController.text.trim();
     if (text.isEmpty) return;
 
-    // UserNum 설정하는 곳, 메인 페이지나 다른 기능 추가되면 받아오게 변경
-    bool success = await _postService.insertComment(text, widget.postId, 3);
+    bool success = await _postService.insertComment(text, widget.postId, _myUserNum);
 
     if (success) {
       _commentController.clear();
@@ -49,6 +53,51 @@ class _DetailScreenState extends State<DetailScreen> {
       FocusScope.of(context).unfocus();
     } else {
       _showMsg("댓글 등록에 실패했습니다.");
+    }
+  }
+
+  // 댓글 삭제 로직 (CommentTile의 onDelete에서 호출됨)
+  Future<void> _handleDeleteComment(CommentDto comment) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: contentDark,
+        title: const Text("댓글 삭제", style: TextStyle(color: Colors.white, fontSize: 16)),
+        content: const Text("정말 이 댓글을 삭제하시겠습니까?", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("취소", style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("삭제", style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      bool success = await _postService.deleteComment(comment.commentId, _myUserNum);
+      if (success) {
+        _showMsg("댓글이 삭제되었습니다.");
+        _loadData(); // 목록 새로고침
+      } else {
+        _showMsg("삭제 권한이 없거나 실패했습니다.");
+      }
+    }
+  }
+
+  // 댓글 수정 로직 (CommentTile의 onEdit에서 호출됨)
+  Future<void> _handleUpdateComment(CommentDto comment, String newContent) async {
+    if (newContent.trim().isEmpty) return;
+
+    bool success = await _postService.updateComment(comment.commentId, _myUserNum, newContent);
+    if (success) {
+      _showMsg("댓글이 수정되었습니다.");
+      _loadData(); // 목록 새로고침
+    } else {
+      _showMsg("수정 실패: 권한이 없습니다.");
     }
   }
 
@@ -110,7 +159,21 @@ class _DetailScreenState extends State<DetailScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: comments.length,
-                      itemBuilder: (context, index) => _buildCommentTile(comments[index]),
+                      itemBuilder: (context, index) {
+                        final comment = comments[index];
+                        // 외부 위젯인 CommentTile 사용
+                        return CommentTile(
+                          comment: comment,
+                          nickname: comment.nickname,
+                          // 내가 작성한 댓글인 경우에만 콜백 전달 (null이면 버튼 숨김)
+                          onDelete: (comment.userNum == _myUserNum)
+                              ? () => _handleDeleteComment(comment)
+                              : null,
+                          onEdit: (comment.userNum == _myUserNum)
+                              ? (newContent) => _handleUpdateComment(comment, newContent)
+                              : null,
+                        );
+                      },
                     );
                   },
                 ),
@@ -124,6 +187,7 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
+  // UI 빌더 함수들 (기존과 동일)
   Widget _buildCommentInput() {
     return Container(
       padding: EdgeInsets.only(
@@ -157,30 +221,6 @@ class _DetailScreenState extends State<DetailScreen> {
             icon: const Icon(Icons.send, color: accentPurple),
             onPressed: _handleCommentSubmit,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommentTile(CommentDto comment) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white10, width: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(comment.nickname,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-              Text(comment.createdAt.toString(), style: const TextStyle(color: Colors.grey, fontSize: 11)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(comment.content, style: const TextStyle(color: Colors.white70, fontSize: 14)),
         ],
       ),
     );
@@ -238,7 +278,7 @@ class _DetailScreenState extends State<DetailScreen> {
         children: [
           GestureDetector(
             onTap: () async {
-              bool success = await _postService.pushLike(widget.postId, 3);
+              bool success = await _postService.pushLike(widget.postId, _myUserNum);
               if (success) {
                 _loadData();
                 _showMsg("추천되었습니다!");

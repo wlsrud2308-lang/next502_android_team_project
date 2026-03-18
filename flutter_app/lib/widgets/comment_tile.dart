@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/comment_model.dart';
+import '../dto/comment_dto.dart';
 
 class CommentTile extends StatelessWidget {
-  final CommentModel comment;
+  final CommentDto comment;
   final String nickname; // 나중에 서버에서 가져올 수도 있음
   final VoidCallback? onDelete;
   final Function(String newContent)? onEdit;

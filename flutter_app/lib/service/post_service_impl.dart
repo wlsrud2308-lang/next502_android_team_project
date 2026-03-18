@@ -86,4 +86,47 @@ class PostServiceImpl implements PostService {
       return false;
     }
   }
+
+  @override
+  Future<bool> updateComment(int commentId, int userNum, String content) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/comments'), // 서버 주소에 맞게 수정
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "commentId": commentId,
+          "userNum": userNum,
+          "content": content,
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("댓글 수정 에러: $e");
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> deleteComment(int commentId, int userNum) async {
+    // 💡 여기서 commentId가 0으로 찍히는지 반드시 확인하세요!
+    print("🚨 [삭제 시도] ID: $commentId, 유저번호: $userNum");
+
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/comments'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "commentId": commentId,
+          "userNum": userNum,
+        }),
+      );
+
+      print("📢 [서버 응답] 코드: ${response.statusCode}, 바디: ${response.body}");
+      return response.statusCode == 200;
+    } catch (e) {
+      print("❌ [통신 에러]: $e");
+      return false;
+    }
+  }
 }
