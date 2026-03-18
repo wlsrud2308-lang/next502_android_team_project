@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+import 'package:flutter_app/widgets/movie_list_page.dart';
 
 void main() => runApp(const MovieApp());
 
@@ -31,18 +31,8 @@ class MovieHomeScreen extends StatefulWidget {
 }
 
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
-  int _selectedCategoryIndex = 1;
+  int _selectedCategoryIndex = 0;
   final List<String> _categories = ["영화 정보", "해외영화", "국내영화", "OTT", "블루레이", "자유게시판"];
-
-
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: 'http://10.0.2.2:8080',
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
-
 
   @override
   Widget build(BuildContext context) {
@@ -51,12 +41,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         backgroundColor: Colors.deepPurple,
         leading: const Icon(Icons.movie_filter, color: Colors.purpleAccent),
         actions: [
-          //  상단에 API 통신 테스트용 초록색 새로고침(Sync) 버튼을 배치
-          IconButton(
-            icon: const Icon(Icons.sync, color: Colors.greenAccent),
-            onPressed: () {},
-          ),
-          // 종료
           IconButton(icon: const Icon(Icons.search, color: Colors.white30), onPressed: () {}),
           IconButton(icon: const Icon(Icons.person_outline, color: Colors.white30), onPressed: () {}),
         ],
@@ -65,39 +49,53 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         children: [
           _buildBoxOfficeBar(),
           _buildBarCategoryNav(),
-
           Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF121212),
-              ),
-              child: ListView(
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _buildSectionHeader("🔥 실시간 인기글"),
-                  _buildFilterChips(),
-                  const SizedBox(height: 10),
-                  _buildPostItem(context, "1", "듄: 파트2 아이맥스 용산 명당자리 공유합니다", "해외영화", "무비러버", "2시간전", 45),
-                  _buildPostItem(context, "2", "파묘 1000만 돌파 확정! 장재현 감독의 힘인가요?", "국내영화", "스포주의", "4시간전", 128),
-                  _buildPostItem(context, "3", "넷플릭스 '삼체' 원작 소설이랑 비교해본 후기", "OTT", "SF매니아", "10시간전", 22),
-                  _buildPostItem(context, "4", "이번주 개봉 영화 평론가 한줄평 싹 모아드림", "영화뉴스", "시네필", "13시간전", 56),
-                ],
-              ),
-            ),
+            child: _selectedCategoryIndex == 0
+                ? _buildMovieInfoButton()
+                : _buildOtherCategoryContent(),
           ),
         ],
-      ),
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.purpleAccent,
-        onPressed: () {
-          print("게시판 글쓰기 버튼 클릭됨!");
-        },
-        child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
   }
 
+  // ================= "영화 정보" 버튼
+  Widget _buildMovieInfoButton() {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MovieListPage()),
+          );
+        },
+        icon: const Icon(Icons.movie),
+        label: const Text("영화 정보 보러가기"),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.deepPurpleAccent,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  // ================= 기존 인기글/게시판 UI
+  Widget _buildOtherCategoryContent() {
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      children: [
+        _buildSectionHeader("🔥 실시간 인기글"),
+        _buildFilterChips(),
+        const SizedBox(height: 10),
+        _buildPostItem(context, "1", "듄: 파트2 아이맥스 용산 명당자리 공유합니다", "해외영화", "무비러버", "2시간전", 45),
+        _buildPostItem(context, "2", "파묘 1000만 돌파 확정! 장재현 감독의 힘인가요?", "국내영화", "스포주의", "4시간전", 128),
+        _buildPostItem(context, "3", "넷플릭스 '삼체' 원작 소설이랑 비교해본 후기", "OTT", "SF매니아", "10시간전", 22),
+        _buildPostItem(context, "4", "이번주 개봉 영화 평론가 한줄평 싹 모아드림", "영화뉴스", "시네필", "13시간전", 56),
+      ],
+    );
+  }
+
+  // ================= UI 컴포넌트
   Widget _buildBoxOfficeBar() {
     return Container(
       height: 55,
