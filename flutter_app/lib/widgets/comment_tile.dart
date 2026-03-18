@@ -54,8 +54,7 @@ class CommentTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(formatTime(comment.createdAt), style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold
+                      color: Colors.white38,
                   )),
                 ],
               ),
