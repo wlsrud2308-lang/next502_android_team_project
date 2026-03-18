@@ -1,5 +1,5 @@
 class Movie {
-  final int id;                 // TMDb movie ID
+  final int id;
   final String title;
   final String originalTitle;
   final String overview;
@@ -12,8 +12,12 @@ class Movie {
   final String? originalLanguage;
   final int? runtime;
 
-  final List<Cast>? cast;       // 배우
-  final List<Crew>? crew;       // 감독/작업자
+  final int? isNowPlaying;  // 1이면 now playing
+  final int? isPopular;     // 1이면 popular
+  final int? isTopRated;    // 1이면 top rated
+
+  final List<Cast>? cast;
+  final List<Crew>? crew;
 
   Movie({
     required this.id,
@@ -28,6 +32,9 @@ class Movie {
     this.popularity,
     this.originalLanguage,
     this.runtime,
+    this.isNowPlaying,
+    this.isPopular,
+    this.isTopRated,
     this.cast,
     this.crew,
   });
@@ -41,13 +48,14 @@ class Movie {
       posterPath: json['poster_path'] as String?,
       backdropPath: json['backdrop_path'] as String?,
       releaseDate: json['release_date'] as String?,
-      voteAverage: json['vote_average'] != null
-          ? (json['vote_average'] as num).toDouble()
-          : null,
+      voteAverage: json['vote_average'] != null ? (json['vote_average'] as num).toDouble() : null,
       voteCount: json['vote_count'] as int?,
       popularity: json['popularity'] != null ? (json['popularity'] as num).toDouble() : null,
       originalLanguage: json['original_language'] as String?,
       runtime: json['runtime'] as int?,
+      isNowPlaying: json['is_now_playing'] as int?,
+      isPopular: json['is_popular'] as int?,
+      isTopRated: json['is_top_rated'] as int?,
       cast: json['cast'] != null
           ? (json['cast'] as List).map((e) => Cast.fromJson(e)).toList()
           : null,
