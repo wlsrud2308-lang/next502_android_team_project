@@ -47,8 +47,9 @@ class PostServiceImpl implements PostService {
   @override
   Future<List<CommentDto>> getComments(String postId) async {
     try {
-      final url = '$baseUrl/comments/POST/$postId';
-      print("🚀 댓글 요청 주소: $url");
+      final url = '$baseUrl/comments/$postId';
+
+      print("🚀 수정된 댓글 요청 주소: $url");
 
       final response = await http.get(Uri.parse(url));
 

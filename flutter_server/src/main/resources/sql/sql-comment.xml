@@ -3,25 +3,34 @@
 
 <mapper namespace="bitc.next502.flutter_server.mapper.CommentMapper">
 
+    <!--  댓글 등록 -->
     <insert id="insertComment">
-        INSERT INTO comments (content, user_num, target_type, target_id, created_at)
-        VALUES (#{content}, #{userNum}, #{targetType}, #{targetId}, NOW())
+        INSERT INTO comments (content, user_num, post_id, created_at)
+        VALUES (#{content}, #{userNum}, #{postId}, NOW())
     </insert>
 
+    <!--  댓글 조회 -->
     <select id="getComments" resultType="bitc.next502.flutter_server.dto.CommentDTO">
-        SELECT
-            c.comment_id AS commentId,
-            c.content,
-            c.user_num AS userNum,
-            u.nickname AS nickname,
-            c.target_type AS targetType,
-            c.target_id AS targetId,
-            c.created_at AS createdAt
-        FROM comments c
-                 JOIN users u ON c.user_num = u.user_num
-        WHERE c.target_type = #{targetType}
-          AND c.target_id = #{targetId}
-        ORDER BY c.created_at DESC
+        SELECT comment_id, content, user_num, post_id, created_at, updated_at
+        FROM comments
+        WHERE post_id = #{postId}
+        ORDER BY created_at DESC
     </select>
+
+    <!--  댓글 수정 -->
+    <update id="updateComment">
+        UPDATE comments
+        SET content = #{content},
+            updated_at = NOW()
+        WHERE comment_id = #{commentId}
+          AND user_num = #{userNum}
+    </update>
+
+    <!--  댓글 삭제 -->
+    <delete id="deleteComment">
+        DELETE FROM comments
+        WHERE comment_id = #{commentId}
+          AND user_num = #{userNum}
+    </delete>
 
 </mapper>

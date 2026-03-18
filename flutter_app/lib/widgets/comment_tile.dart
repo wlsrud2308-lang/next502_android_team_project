@@ -47,9 +47,16 @@ class CommentTile extends StatelessWidget {
               // 닉네임 + 시간
               Row(
                 children: [
-                  Text(nickname, style: const TextStyle(...)),
+                  Text(nickname, style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold
+                  )
+                  ),
                   const SizedBox(width: 8),
-                  Text(formatTime(comment.createdAt), style: const TextStyle(...)),
+                  Text(formatTime(comment.createdAt), style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold
+                  )),
                 ],
               ),
 
