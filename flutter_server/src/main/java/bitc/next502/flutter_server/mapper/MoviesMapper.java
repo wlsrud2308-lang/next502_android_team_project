@@ -18,6 +18,13 @@ public interface MoviesMapper {
   List<MoviesDTO> getPopularMovies();
   List<MoviesDTO> getTopRatedMovies();
 
+  // 상세 조회 추가
+  MoviesDTO getMovieById(Long id);
+
+  // 배우 / 감독 조회 추가
+  List<CastDTO> getCastByMovieId(Long movieId);
+  List<CrewDTO> getCrewByMovieId(Long movieId);
+
   void insertCastBatch(Long movieId, List<CastDTO> castList);
   void insertCrewBatch(Long movieId, List<CrewDTO> crewList);
 

@@ -8,6 +8,9 @@ public interface MoviesService {
   List<MoviesDTO> getNowPlayingMovies();    // 최신 영화만 조회
   List<MoviesDTO> getPopularMovies();       // 인기 영화만 조회
   List<MoviesDTO> getTopRatedMovies();      // 평점 영화만 조회
+
+  MoviesDTO getMovieById(Long id);
+
   void updatePopularMovies();               // 인기 영화만 갱신
   void updateTopRatedMovies();              // 평점 영화만 갱신
   void updateNowPlayingMovies();            // 최신 영화만 갱신

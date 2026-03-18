@@ -73,4 +73,42 @@
             LIMIT 20;
     </select>
 
+    <select id="getMovieById" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
+        SELECT
+            id,
+            title,
+            original_title,
+            overview,
+            poster_path,
+            backdrop_path,
+            release_date,
+            vote_average,
+            vote_count,
+            popularity,
+            original_language,
+            runtime
+        FROM movies
+        WHERE id = #{id}
+    </select>
+
+    <select id="getCastByMovieId" resultType="bitc.next502.flutter_server.dto.CastDTO">
+        SELECT
+            person_id AS id,
+            name,
+            character_name,
+            profile_path
+        FROM `cast`
+        WHERE movie_id = #{movieId}
+    </select>
+
+    <select id="getCrewByMovieId" resultType="bitc.next502.flutter_server.dto.CrewDTO">
+        SELECT
+            person_id AS id,
+            name,
+            job,
+            profile_path
+        FROM crew
+        WHERE movie_id = #{movieId}
+    </select>
+
 </mapper>

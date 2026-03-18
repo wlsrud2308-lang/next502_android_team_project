@@ -41,6 +41,18 @@ public class MoviesServiceImpl implements MoviesService {
   }
 
   @Override
+  public MoviesDTO getMovieById(Long id) {
+    MoviesDTO movie = moviesMapper.getMovieById(id);
+
+    if (movie != null) {
+      movie.setCast(moviesMapper.getCastByMovieId(id));
+      movie.setCrew(moviesMapper.getCrewByMovieId(id));
+    }
+
+    return movie;
+  }
+
+  @Override
   public void updatePopularMovies() {
     updateCategoryMovies("popular");
   }
