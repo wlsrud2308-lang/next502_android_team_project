@@ -5,23 +5,22 @@
 
 <mapper namespace="bitc.next502.flutter_server.mapper.MoviesMapper">
 
+    <!-- 영화 insert -->
     <insert id="insertMovie" parameterType="bitc.next502.flutter_server.dto.MoviesDTO">
-        INSERT INTO movies (
-            id, title, original_title, overview, poster_path, backdrop_path, release_date, category,
-            vote_average, vote_count, popularity, adult, original_language, video,
-            runtime, budget, revenue, status, homepage
-        )
-        VALUES (
-                   #{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate}, #{category},
-                   #{voteAverage}, #{voteCount}, #{popularity}, #{adult}, #{originalLanguage}, #{video},
-                   #{runtime}, #{budget}, #{revenue}, #{status}, #{homepage}
-               )
+        INSERT INTO movies (id, title, original_title, overview, poster_path, backdrop_path, release_date,
+                            category, vote_average, vote_count, popularity, adult, original_language, video,
+                            runtime, budget, revenue, status, homepage)
+        VALUES (#{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate},
+                #{category}, #{voteAverage}, #{voteCount}, #{popularity}, #{adult}, #{originalLanguage}, #{video},
+                #{runtime}, #{budget}, #{revenue}, #{status}, #{homepage})
             ON DUPLICATE KEY UPDATE
                                  title = VALUES(title),
+                                 original_title = VALUES(original_title),
                                  overview = VALUES(overview),
                                  poster_path = VALUES(poster_path),
                                  backdrop_path = VALUES(backdrop_path),
                                  release_date = VALUES(release_date),
+                                 category = VALUES(category),
                                  vote_average = VALUES(vote_average),
                                  vote_count = VALUES(vote_count),
                                  popularity = VALUES(popularity),
@@ -32,15 +31,42 @@
                                  budget = VALUES(budget),
                                  revenue = VALUES(revenue),
                                  status = VALUES(status),
-                                 homepage = VALUES(homepage)
+                                 homepage = VALUES(homepage);
     </insert>
 
-    <delete id="deleteCategoryMovies" parameterType="String">
-        DELETE FROM movies WHERE category = #{category}
+    <!-- 배우 배치 insert -->
+    <insert id="insertCastBatch" parameterType="map">
+        INSERT INTO cast (movie_id, person_id, name, character_name)
+        VALUES
+        <foreach collection="castList" item="cast" separator=",">
+            (#{movieId}, #{cast.id}, #{cast.name}, #{cast.character_name})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        name = VALUES(name),
+        character_name = VALUES(character_name);
+    </insert>
+
+    <!-- 감독/작업자 배치 insert -->
+    <insert id="insertCrewBatch" parameterType="map">
+        INSERT INTO crew (movie_id, person_id, name, job)
+        VALUES
+        <foreach collection="crewList" item="crew" separator=",">
+            (#{movieId}, #{crew.id}, #{crew.name}, #{crew.job})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        name = VALUES(name),
+        job = VALUES(job);
+    </insert>
+
+    <!-- 특정 카테고리 영화 삭제 -->
+    <delete id="deleteCategoryMovies">
+        DELETE FROM movies WHERE category = #{category};
     </delete>
 
+    <!-- 전체 영화 조회 -->
     <select id="getAllMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT * FROM movies
+        SELECT *
+        FROM movies
     </select>
 
 </mapper>

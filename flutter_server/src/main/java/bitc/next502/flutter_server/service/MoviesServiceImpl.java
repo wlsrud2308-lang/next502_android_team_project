@@ -1,5 +1,8 @@
 package bitc.next502.flutter_server.service;
 
+import bitc.next502.flutter_server.dto.CastDTO;
+import bitc.next502.flutter_server.dto.CreditsDTO;
+import bitc.next502.flutter_server.dto.CrewDTO;
 import bitc.next502.flutter_server.dto.MoviesDTO;
 import bitc.next502.flutter_server.dto.TmdbResponseDTO;
 import bitc.next502.flutter_server.mapper.MoviesMapper;
@@ -45,7 +48,7 @@ public class MoviesServiceImpl implements MoviesService {
   }
 
   // =========================
-  // 카테고리별 영화 업데이트 (리스트 + 상세 정보)
+  // 카테고리별 영화 업데이트 (리스트 + 상세 정보 + 배우/감독)
   // =========================
   private void updateCategoryMovies(String category) {
     List<MoviesDTO> movies = fetchMoviesFromTmdb(category);
@@ -63,6 +66,23 @@ public class MoviesServiceImpl implements MoviesService {
         movie.setAdult(details.getAdult());
         movie.setVideo(details.getVideo());
       }
+
+      // Credits 가져오기 (배우/감독)
+      CreditsDTO credits = fetchCredits(movie.getId());
+
+      // 배우 상위 10명
+      List<CastDTO> topCast = credits.getCast().stream()
+          .limit(10)
+          .toList();
+      movie.setCast(topCast);
+      saveCast(movie.getId(), topCast);
+
+      // 감독만
+      List<CrewDTO> directors = credits.getCrew().stream()
+          .filter(c -> "Director".equals(c.getJob()))
+          .toList();
+      movie.setCrew(directors);
+      saveCrew(movie.getId(), directors);
     }
 
     saveMovies(movies, category);
@@ -95,6 +115,21 @@ public class MoviesServiceImpl implements MoviesService {
   }
 
   // =========================
+  // TMDB Credits API 호출
+  // =========================
+  private CreditsDTO fetchCredits(Long movieId) {
+    String url = "https://api.themoviedb.org/3/movie/" + movieId
+        + "/credits?api_key=" + apiKey + "&language=ko-KR";
+
+    try {
+      return restTemplate.getForObject(url, CreditsDTO.class);
+    } catch (Exception e) {
+      System.out.println("Credits 가져오기 실패: " + movieId);
+      return new CreditsDTO(); // 빈 객체 반환
+    }
+  }
+
+  // =========================
   // DB 저장
   // =========================
   private void saveMovies(List<MoviesDTO> movies, String category) {
@@ -108,5 +143,15 @@ public class MoviesServiceImpl implements MoviesService {
     }
 
     System.out.println(category + " 영화 데이터 저장 완료! 총 " + movies.size() + "개");
+  }
+
+  private void saveCast(Long movieId, List<CastDTO> castList) {
+    if (castList == null || castList.isEmpty()) return;
+    moviesMapper.insertCastBatch(movieId, castList);
+  }
+
+  private void saveCrew(Long movieId, List<CrewDTO> crewList) {
+    if (crewList == null || crewList.isEmpty()) return;
+    moviesMapper.insertCrewBatch(movieId, crewList);
   }
 }

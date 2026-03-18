@@ -24,7 +24,7 @@ public class MoviesController {
 
   @PostMapping("/sync")
   public String syncMovies(){
-    moviesService.updatePopularMovies();
+    moviesService.updateAllMovies();
     return "success";
   }
 }

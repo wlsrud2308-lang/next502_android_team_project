@@ -34,6 +34,7 @@ public class MoviesDTO {
 
   private Double popularity;
 
+  @JsonProperty("genre_ids")
   private List<Integer> genreIds;
 
   private Boolean adult;
@@ -52,4 +53,11 @@ public class MoviesDTO {
   private String status;
 
   private String homepage;
+
+  private List<CastDTO> cast;        // 상위 10명 정도
+  private List<CrewDTO> crew;        // 감독 정보
 }
+
+
+
+
