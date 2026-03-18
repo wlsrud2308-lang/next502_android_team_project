@@ -55,4 +55,22 @@
         FROM movies
     </select>
 
+    <select id="getNowPlayingMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
+        SELECT * FROM movies
+        WHERE release_date >= CURDATE() - INTERVAL 30 DAY
+        ORDER BY release_date DESC;
+    </select>
+
+    <select id="getPopularMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
+        SELECT * FROM movies
+        ORDER BY popularity DESC
+            LIMIT 20;
+    </select>
+
+    <select id="getTopRatedMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
+        SELECT * FROM movies
+        ORDER BY vote_average DESC
+            LIMIT 20;
+    </select>
+
 </mapper>
