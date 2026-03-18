@@ -1,27 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/widgets/movie_list_page.dart';
-
-void main() => runApp(const MovieApp());
-
-class MovieApp extends StatelessWidget {
-  const MovieApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0A0A0A),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF1A1A1A),
-          elevation: 0,
-          titleTextStyle: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
-      home: const MovieHomeScreen(),
-    );
-  }
-}
+import '../models/movie.dart';
+import '../service/movie_service.dart';
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -32,7 +12,21 @@ class MovieHomeScreen extends StatefulWidget {
 
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
   int _selectedCategoryIndex = 0;
-  final List<String> _categories = ["영화 정보", "해외영화", "국내영화", "OTT", "블루레이", "자유게시판"];
+  final List<String> _categories = [
+    "영화 정보",
+    "해외영화",
+    "국내영화",
+    "자유게시판"
+  ];
+
+  late Future<List<Movie>> movies;
+
+  @override
+  void initState() {
+    super.initState();
+    // 영화정보 탭에서는 최신영화만 가져오도록 변경
+    movies = MovieService.fetchNowPlayingMovies();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +34,21 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.deepPurple,
         leading: const Icon(Icons.movie_filter, color: Colors.purpleAccent),
+        title: const Text("영화 앱"),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.white30), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.person_outline, color: Colors.white30), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white30),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MovieListPage()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.white30),
+            onPressed: () {},
+          ),
         ],
       ),
       body: Column(
@@ -51,7 +57,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           _buildBarCategoryNav(),
           Expanded(
             child: _selectedCategoryIndex == 0
-                ? _buildMovieInfoButton()
+                ? _buildMovieList() // 최신영화만 표시
                 : _buildOtherCategoryContent(),
           ),
         ],
@@ -59,27 +65,75 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  // ================= "영화 정보" 버튼
-  Widget _buildMovieInfoButton() {
-    return Center(
-      child: ElevatedButton.icon(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MovieListPage()),
-          );
-        },
-        icon: const Icon(Icons.movie),
-        label: const Text("영화 정보 보러가기"),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.deepPurpleAccent,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        ),
-      ),
+  // ====================== 최신영화 리스트
+  Widget _buildMovieList() {
+    return FutureBuilder<List<Movie>>(
+      future: movies,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text("에러: ${snapshot.error}"));
+        }
+
+        final movieList = snapshot.data ?? [];
+        if (movieList.isEmpty) {
+          return const Center(child: Text("최신 영화 데이터가 없습니다."));
+        }
+
+        return ListView.builder(
+          physics: const BouncingScrollPhysics(),
+          itemCount: movieList.length,
+          itemBuilder: (context, index) {
+            final movie = movieList[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(8),
+                leading: movie.posterPath != null && movie.posterPath!.isNotEmpty
+                    ? Image.network(
+                  "https://image.tmdb.org/t/p/w200${movie.posterPath}",
+                  width: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => const Icon(Icons.movie),
+                )
+                    : const Icon(Icons.movie, size: 50),
+                title: Text(
+                  movie.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      movie.overview,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (movie.voteAverage != null) Text("⭐ ${movie.voteAverage}"),
+                        if (movie.runtime != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Text("⏱ ${movie.runtime}분"),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                isThreeLine: true,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  // ================= 기존 인기글/게시판 UI
+  // ====================== 나머지 카테고리 콘텐츠
   Widget _buildOtherCategoryContent() {
     return ListView(
       physics: const BouncingScrollPhysics(),
@@ -95,7 +149,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  // ================= UI 컴포넌트
+  // ====================== 공통 UI
   Widget _buildBoxOfficeBar() {
     return Container(
       height: 55,
@@ -115,12 +169,17 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   Widget _boxOfficeTile(String title, String rate) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.white.withOpacity(0.05)))),
+      decoration: BoxDecoration(
+          border: Border(right: BorderSide(color: Colors.white.withOpacity(0.05)))),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(rate, style: const TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          Text(title,
+              style:
+              const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(rate,
+              style: const TextStyle(
+                  fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -172,7 +231,9 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
       child: Row(
         children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(title,
+              style:
+              const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           const Spacer(),
           const Icon(Icons.chevron_right, color: Colors.white54),
         ],
@@ -187,20 +248,27 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(left: 16),
-        children: filters.map((f) => Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: ActionChip(
-            label: Text(f, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
-            backgroundColor: const Color(0xFF2A2A2A),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-            onPressed: () {},
+        children: filters
+            .map(
+              (f) => Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ActionChip(
+              label: Text(f,
+                  style: const TextStyle(
+                      fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
+              backgroundColor: const Color(0xFF2A2A2A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              onPressed: () {},
+            ),
           ),
-        )).toList(),
+        )
+            .toList(),
       ),
     );
   }
 
-  Widget _buildPostItem(BuildContext context, String rank, String title, String category, String author, String time, int comments) {
+  Widget _buildPostItem(BuildContext context, String rank, String title, String category,
+      String author, String time, int comments) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -211,25 +279,30 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         children: [
           SizedBox(
             width: 35,
-            child: Text(rank, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orangeAccent)),
+            child: Text(rank,
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orangeAccent)),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white, height: 1.3),
-                  maxLines: 2,
-                ),
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white, height: 1.3),
+                    maxLines: 2),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Text(category, style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                    Text(category,
+                        style: const TextStyle(
+                            color: Colors.lightBlueAccent, fontSize: 11, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 10),
-                    Text(author, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                    Text(author,
+                        style: const TextStyle(color: Colors.white70, fontSize: 11)),
                     const SizedBox(width: 10),
-                    Text(time, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    Text(time,
+                        style: const TextStyle(color: Colors.white54, fontSize: 11)),
                   ],
                 ),
               ],
@@ -245,7 +318,9 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             child: Column(
               children: [
                 const Icon(Icons.comment, size: 14, color: Colors.white70),
-                Text(comments.toString(), style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.bold)),
+                Text(comments.toString(),
+                    style: const TextStyle(
+                        fontSize: 10, color: Colors.white70, fontWeight: FontWeight.bold)),
               ],
             ),
           ),

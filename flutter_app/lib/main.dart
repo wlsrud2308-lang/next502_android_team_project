@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
 
           // 로그인 정보(snapshot.hasData)가 있으면 영화 리스트 화면으로 바로 이동
           if (snapshot.hasData) {
-            return const DetailScreen(postId: '123',);
+            return const MovieHomeScreen();
           }
 
           // 로그인 정보가 없으면 로그인 페이지로!

@@ -5,29 +5,18 @@
 
 <mapper namespace="bitc.next502.flutter_server.mapper.MoviesMapper">
 
-    <!-- 영화 insert -->
+        <!-- 영화 insert -->
     <insert id="insertMovie" parameterType="bitc.next502.flutter_server.dto.MoviesDTO">
-        INSERT INTO movies (
-            id, title, original_title, overview, poster_path, backdrop_path, release_date,
-            vote_average, vote_count, popularity, original_language, runtime
-        )
-        VALUES (
-                   #{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate},
-                   #{voteAverage}, #{voteCount}, #{popularity}, #{originalLanguage}, #{runtime}
-               )
+        INSERT INTO movies (id, title, original_title, overview, poster_path, backdrop_path, release_date,
+                            vote_average, vote_count, popularity, original_language, runtime)
+        VALUES (#{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate},
+                #{voteAverage}, #{voteCount}, #{popularity}, #{originalLanguage}, #{runtime})
             ON DUPLICATE KEY UPDATE
-                                 title = VALUES(title),
-                                 original_title = VALUES(original_title),
-                                 overview = VALUES(overview),
-                                 poster_path = VALUES(poster_path),
-                                 backdrop_path = VALUES(backdrop_path),
-                                 release_date = VALUES(release_date),
-                                 vote_average = VALUES(vote_average),
-                                 vote_count = VALUES(vote_count),
-                                 popularity = VALUES(popularity),
-                                 original_language = VALUES(original_language),
-                                 runtime = VALUES(runtime);
-    </insert>
+                                title=VALUES(title), original_title=VALUES(original_title), overview=VALUES(overview),
+                                poster_path=VALUES(poster_path), backdrop_path=VALUES(backdrop_path), release_date=VALUES(release_date),
+                                vote_average=VALUES(vote_average), vote_count=VALUES(vote_count), popularity=VALUES(popularity),
+                                original_language=VALUES(original_language), runtime=VALUES(runtime);
+        </insert>
 
     <!-- 배우 배치 insert -->
     <insert id="insertCastBatch" parameterType="map">

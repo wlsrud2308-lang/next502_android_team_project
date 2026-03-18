@@ -18,11 +18,26 @@ public class MoviesServiceImpl implements MoviesService {
 
   private final MoviesMapper moviesMapper;
   private final RestTemplate restTemplate = new RestTemplate();
-  private final String tmdbApiKey = "70572fb9818902f499a53a287d6055b6";
+  private final String tmdbApiKey = "YOUR_TMDB_API_KEY";
 
   @Override
   public List<MoviesDTO> getMovies() {
     return moviesMapper.getAllMovies();
+  }
+
+  @Override
+  public List<MoviesDTO> getNowPlayingMovies() {
+    return moviesMapper.getNowPlayingMovies(); // Mapper에서 최신 영화만 조회
+  }
+
+  @Override
+  public List<MoviesDTO> getPopularMovies() {
+    return moviesMapper.getPopularMovies(); // Mapper에서 인기 영화 조회
+  }
+
+  @Override
+  public List<MoviesDTO> getTopRatedMovies() {
+    return moviesMapper.getTopRatedMovies(); // Mapper에서 평점 영화 조회
   }
 
   @Override
@@ -42,9 +57,9 @@ public class MoviesServiceImpl implements MoviesService {
 
   @Override
   public void updateAllMovies() {
+    updateNowPlayingMovies();
     updatePopularMovies();
     updateTopRatedMovies();
-    updateNowPlayingMovies();
   }
 
   @Override
@@ -55,14 +70,13 @@ public class MoviesServiceImpl implements MoviesService {
       for (MoviesDTO movie : movies) {
         MoviesDTO details = fetchMovieDetail(movie.getId());
         applyTmdbDetails(movie, details);
-
         moviesMapper.insertMovie(movie);
       }
     }
     System.out.println("모든 영화 movies 테이블 동기화 완료!");
   }
 
-  // ================= TMDb + DB 통합 =================
+  // ===== TMDb + DB 통합 =====
   private void updateCategoryMovies(String category) {
     List<MoviesDTO> movies = fetchMoviesFromTmdb(category);
     if (movies == null || movies.isEmpty()) return;
@@ -71,12 +85,9 @@ public class MoviesServiceImpl implements MoviesService {
       MoviesDTO details = fetchMovieDetail(movie.getId());
       applyTmdbDetails(movie, details);
 
-      // DB 저장
       moviesMapper.insertMovie(movie);
 
-      // Credits 저장
       CreditsDTO credits = fetchCredits(movie.getId());
-
       List<CastDTO> topCast = credits.getCast() != null
           ? credits.getCast().stream().limit(10).toList()
           : List.of();
@@ -91,7 +102,6 @@ public class MoviesServiceImpl implements MoviesService {
     System.out.println(category + " 영화 데이터 + cast/crew 저장 완료! 총 " + movies.size() + "개");
   }
 
-  // ================= TMDb 상세 정보 적용 =================
   private void applyTmdbDetails(MoviesDTO target, MoviesDTO details) {
     if (details == null) return;
     target.setRuntime(details.getRuntime());
@@ -104,7 +114,6 @@ public class MoviesServiceImpl implements MoviesService {
     target.setReleaseDate(details.getReleaseDate());
   }
 
-  // ================= TMDb API 호출 =================
   private List<MoviesDTO> fetchMoviesFromTmdb(String category) {
     String url = "https://api.themoviedb.org/3/movie/" + category
         + "?api_key=" + tmdbApiKey + "&language=ko-KR&page=1";
@@ -139,7 +148,6 @@ public class MoviesServiceImpl implements MoviesService {
     }
   }
 
-  // ================= DB 저장: cast/crew =================
   private void saveCast(Long movieId, List<CastDTO> castList) {
     if (castList == null || castList.isEmpty()) return;
     try {

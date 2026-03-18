@@ -15,4 +15,17 @@ class MovieService {
       throw Exception("영화 데이터를 불러오는데 실패");
     }
   }
+
+  static Future<List<Movie>> fetchNowPlayingMovies() async {
+    final response = await http.get(Uri.parse('$baseUrl/home'));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonData = json.decode(response.body);
+      final List<dynamic> nowPlayingList = jsonData['nowPlaying'] ?? [];
+
+      return nowPlayingList.map((e) => Movie.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load now playing movies');
+    }
+  }
 }
