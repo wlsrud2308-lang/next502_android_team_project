@@ -7,6 +7,16 @@ import java.util.List;
 
 @Mapper
 public interface CommentMapper {
+
+    //  댓글 등록
     void insertComment(CommentDTO dto);
-    List<CommentDTO> getComments(String targetType, String targetId);
+
+
+    List<CommentDTO> getComments(int postId);
+
+
+    void updateComment(CommentDTO dto);
+
+
+    void deleteComment(CommentDTO dto);
 }

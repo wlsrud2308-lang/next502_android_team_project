@@ -21,7 +21,18 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<CommentDTO> getComments(String targetType, String targetId) {
-        return mapper.getComments(targetType, targetId);
+    public List<CommentDTO> getComments(int postId) {
+        return mapper.getComments(postId);
     }
+
+    @Override
+    public void updateComment(CommentDTO dto) {
+        mapper.updateComment(dto);
+    }
+
+    @Override
+    public void deleteComment(CommentDTO dto) {
+        mapper.deleteComment(dto);
+    }
+
 }

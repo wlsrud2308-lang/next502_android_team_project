@@ -17,11 +17,19 @@ class _CommentInputState extends State<CommentInput> {
   final TextEditingController _controller = TextEditingController();
 
   void submit() {
-    final text = _controller.text.trim();
+    //  로그인 확인
+    if (FirebaseAuth.instance.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.')),
+      );
+      return;
+    }
 
+    final text = _controller.text.trim();
     if (text.isEmpty) return;
 
     widget.onSubmit(text);
+
     _controller.clear();
   }
 
@@ -41,6 +49,7 @@ class _CommentInputState extends State<CommentInput> {
           Expanded(
             child: TextField(
               controller: _controller,
+              onSubmitted: (_) => submit(),
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: "따뜻한 댓글을 남겨주세요",
