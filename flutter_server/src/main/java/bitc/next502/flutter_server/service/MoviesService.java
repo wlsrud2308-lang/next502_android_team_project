@@ -9,4 +9,6 @@ public interface MoviesService {
   void updateTopRatedMovies();             // 평점 영화만 갱신
   void updateNowPlayingMovies();           // 최신 영화만 갱신
   void updateAllMovies();                  // 모든 카테고리 자동 갱신
+  void updateMoviesOnly();
 }
+

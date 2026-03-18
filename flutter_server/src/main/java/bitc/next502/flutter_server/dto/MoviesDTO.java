@@ -2,11 +2,13 @@ package bitc.next502.flutter_server.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+
 import java.util.List;
 
 @Data
 public class MoviesDTO {
 
+  // ===== TMDb 기본 =====
   private Long id;
   private String title;
 
@@ -24,8 +26,6 @@ public class MoviesDTO {
   @JsonProperty("release_date")
   private String releaseDate;
 
-  private String category;
-
   @JsonProperty("vote_average")
   private Double voteAverage;
 
@@ -37,27 +37,17 @@ public class MoviesDTO {
   @JsonProperty("genre_ids")
   private List<Integer> genreIds;
 
-  private Boolean adult;
-
   @JsonProperty("original_language")
   private String originalLanguage;
 
-  private Boolean video;
-
   private Integer runtime;
 
-  private Long budget;
+  // ===== TMDb 상세 =====
+  private List<CastDTO> cast;   // 배우
+  private List<CrewDTO> crew;   // 감독 (TMDb만 사용)
 
-  private Long revenue;
+  // ===== KOBIS 최소 추가 =====
+  private String movieCd;        // 영화코드
+  private Long audienceCount;    // 누적 관객수
 
-  private String status;
-
-  private String homepage;
-
-  private List<CastDTO> cast;        // 상위 10명 정도
-  private List<CrewDTO> crew;        // 감독 정보
 }
-
-
-
-

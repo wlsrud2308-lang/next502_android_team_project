@@ -10,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +21,8 @@ public class MoviesServiceImpl implements MoviesService {
 
   private final MoviesMapper moviesMapper;
   private final RestTemplate restTemplate = new RestTemplate();
-  private final String apiKey = "70572fb9818902f499a53a287d6055b6"; // TMDB API Key
+  private final String tmdbApiKey = "70572fb9818902f499a53a287d6055b6";
+  private final String kobisApiKey = "4560a7f48271cc85ea785b96d415149b";
 
   @Override
   public List<MoviesDTO> getMovies() {
@@ -47,65 +51,132 @@ public class MoviesServiceImpl implements MoviesService {
     updateNowPlayingMovies();
   }
 
-  // =========================
-  // 카테고리별 영화 업데이트 (리스트 + 상세 정보 + 배우/감독)
-  // =========================
+  @Override
+  public void updateMoviesOnly() {
+    List<String> categories = List.of("popular", "top_rated", "now_playing");
+    for (String category : categories) {
+      List<MoviesDTO> movies = fetchMoviesFromTmdb(category);
+      for (MoviesDTO movie : movies) {
+        MoviesDTO details = fetchMovieDetail(movie.getId());
+        applyTmdbDetails(movie, details);
+        integrateKobisData(movie);          // KOBIS 통합
+        moviesMapper.insertMovie(movie);    // category 없이 저장
+      }
+    }
+    System.out.println("모든 영화 movies 테이블 동기화 완료!");
+  }
+
+  // ================= TMDb + KOBIS 통합 =================
   private void updateCategoryMovies(String category) {
     List<MoviesDTO> movies = fetchMoviesFromTmdb(category);
+    if (movies == null || movies.isEmpty()) return;
 
     for (MoviesDTO movie : movies) {
-      // 상세 정보 가져오기
       MoviesDTO details = fetchMovieDetail(movie.getId());
-      if (details != null) {
-        movie.setRuntime(details.getRuntime());
-        movie.setBudget(details.getBudget());
-        movie.setRevenue(details.getRevenue());
-        movie.setHomepage(details.getHomepage());
-        movie.setStatus(details.getStatus());
-        movie.setOriginalLanguage(details.getOriginalLanguage());
-        movie.setAdult(details.getAdult());
-        movie.setVideo(details.getVideo());
-      }
+      applyTmdbDetails(movie, details);
 
-      // Credits 가져오기 (배우/감독)
+      integrateKobisData(movie);
+
+      // DB 저장
+      moviesMapper.insertMovie(movie);
+
+      // Credits 저장
       CreditsDTO credits = fetchCredits(movie.getId());
 
-      // 배우 상위 10명
-      List<CastDTO> topCast = credits.getCast().stream()
-          .limit(10)
-          .toList();
-      movie.setCast(topCast);
+      List<CastDTO> topCast = credits.getCast() != null
+          ? credits.getCast().stream().limit(10).toList()
+          : List.of();
       saveCast(movie.getId(), topCast);
 
-      // 감독만
-      List<CrewDTO> directors = credits.getCrew().stream()
-          .filter(c -> "Director".equals(c.getJob()))
-          .toList();
-      movie.setCrew(directors);
+      List<CrewDTO> directors = credits.getCrew() != null
+          ? credits.getCrew().stream().filter(c -> "Director".equals(c.getJob())).toList()
+          : List.of();
       saveCrew(movie.getId(), directors);
     }
 
-    saveMovies(movies, category);
+    System.out.println(category + " 영화 데이터 + cast/crew 저장 완료! 총 " + movies.size() + "개");
   }
 
-  // =========================
-  // TMDB 리스트 API 호출
-  // =========================
+  // ================= TMDb 상세 정보 적용 =================
+  private void applyTmdbDetails(MoviesDTO target, MoviesDTO details) {
+    if (details == null) return;
+    target.setRuntime(details.getRuntime());
+    target.setOverview(details.getOverview());
+    target.setPosterPath(details.getPosterPath());
+    target.setBackdropPath(details.getBackdropPath());
+    target.setVoteAverage(details.getVoteAverage());
+    target.setVoteCount(details.getVoteCount());
+    target.setPopularity(details.getPopularity());
+  }
+
+  // ================= KOBIS 데이터 통합 =================
+  private void integrateKobisData(MoviesDTO movie) {
+    try {
+      MoviesDTO kobis = fetchKobisMovie(movie.getTitle());
+      if (kobis != null) {
+        movie.setMovieCd(kobis.getMovieCd());
+        movie.setAudienceCount(kobis.getAudienceCount());
+        if (movie.getReleaseDate() == null && kobis.getReleaseDate() != null) {
+          movie.setReleaseDate(kobis.getReleaseDate());
+        }
+      }
+    } catch (Exception e) {
+      System.out.println("KOBIS 데이터 통합 실패: " + movie.getTitle());
+    }
+  }
+
+  private MoviesDTO fetchKobisMovie(String title) {
+    try {
+      String url = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieList.json"
+          + "?key=" + kobisApiKey
+          + "&movieNm=" + URLEncoder.encode(title, StandardCharsets.UTF_8);
+
+      Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+      Map<String, Object> result = (Map<String, Object>) response.get("movieListResult");
+      List<Map<String, Object>> movieList = (List<Map<String, Object>>) result.get("movieList");
+
+      if (movieList != null && !movieList.isEmpty()) {
+        Map<String, Object> first = movieList.get(0);
+        MoviesDTO dto = new MoviesDTO();
+        dto.setMovieCd((String) first.get("movieCd"));
+
+        // 관객수 조회 (별도 API)
+        String infoUrl = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json"
+            + "?key=" + kobisApiKey
+            + "&movieCd=" + dto.getMovieCd();
+
+        Map<String, Object> infoResponse = restTemplate.getForObject(infoUrl, Map.class);
+        Map<String, Object> infoResult = (Map<String, Object>) infoResponse.get("movieInfoResult");
+        Map<String, Object> movieInfo = (Map<String, Object>) infoResult.get("movieInfo");
+
+        if (movieInfo.get("audiAcc") != null) {
+          dto.setAudienceCount(Long.parseLong((String) movieInfo.get("audiAcc")));
+        }
+
+        return dto;
+      }
+    } catch (Exception e) {
+      System.out.println("KOBIS API 호출 실패: " + title + " / " + e.getMessage());
+    }
+    return null;
+  }
+
+  // ================= TMDb API 호출 =================
   private List<MoviesDTO> fetchMoviesFromTmdb(String category) {
     String url = "https://api.themoviedb.org/3/movie/" + category
-        + "?api_key=" + apiKey + "&language=ko-KR&page=1";
-
-    TmdbResponseDTO response = restTemplate.getForObject(url, TmdbResponseDTO.class);
-    return response != null ? response.getResults() : List.of();
+        + "?api_key=" + tmdbApiKey + "&language=ko-KR&page=1";
+    try {
+      TmdbResponseDTO response = restTemplate.getForObject(url, TmdbResponseDTO.class);
+      return response != null ? response.getResults() : List.of();
+    } catch (Exception e) {
+      System.out.println(category + " 영화 가져오기 실패: " + e.getMessage());
+      return List.of();
+    }
   }
 
-  // =========================
-  // TMDB 상세 정보 API 호출
-  // =========================
   private MoviesDTO fetchMovieDetail(Long movieId) {
     String url = "https://api.themoviedb.org/3/movie/" + movieId
-        + "?api_key=" + apiKey + "&language=ko-KR";
-
+        + "?api_key=" + tmdbApiKey + "&language=ko-KR";
     try {
       return restTemplate.getForObject(url, MoviesDTO.class);
     } catch (Exception e) {
@@ -114,44 +185,33 @@ public class MoviesServiceImpl implements MoviesService {
     }
   }
 
-  // =========================
-  // TMDB Credits API 호출
-  // =========================
   private CreditsDTO fetchCredits(Long movieId) {
     String url = "https://api.themoviedb.org/3/movie/" + movieId
-        + "/credits?api_key=" + apiKey + "&language=ko-KR";
-
+        + "/credits?api_key=" + tmdbApiKey + "&language=ko-KR";
     try {
       return restTemplate.getForObject(url, CreditsDTO.class);
     } catch (Exception e) {
       System.out.println("Credits 가져오기 실패: " + movieId);
-      return new CreditsDTO(); // 빈 객체 반환
+      return new CreditsDTO();
     }
   }
 
-  // =========================
-  // DB 저장
-  // =========================
-  private void saveMovies(List<MoviesDTO> movies, String category) {
-    if (movies == null || movies.isEmpty()) return;
-
-    moviesMapper.deleteCategoryMovies(category); // 기존 카테고리 삭제
-
-    for (MoviesDTO movie : movies) {
-      movie.setCategory(category);
-      moviesMapper.insertMovie(movie);
-    }
-
-    System.out.println(category + " 영화 데이터 저장 완료! 총 " + movies.size() + "개");
-  }
-
+  // ================= DB 저장: cast/crew =================
   private void saveCast(Long movieId, List<CastDTO> castList) {
     if (castList == null || castList.isEmpty()) return;
-    moviesMapper.insertCastBatch(movieId, castList);
+    try {
+      moviesMapper.insertCastBatch(movieId, castList);
+    } catch (Exception e) {
+      System.out.println("Cast 저장 실패: " + movieId + " / " + e.getMessage());
+    }
   }
 
   private void saveCrew(Long movieId, List<CrewDTO> crewList) {
     if (crewList == null || crewList.isEmpty()) return;
-    moviesMapper.insertCrewBatch(movieId, crewList);
+    try {
+      moviesMapper.insertCrewBatch(movieId, crewList);
+    } catch (Exception e) {
+      System.out.println("Crew 저장 실패: " + movieId + " / " + e.getMessage());
+    }
   }
 }

@@ -7,12 +7,14 @@
 
     <!-- 영화 insert -->
     <insert id="insertMovie" parameterType="bitc.next502.flutter_server.dto.MoviesDTO">
-        INSERT INTO movies (id, title, original_title, overview, poster_path, backdrop_path, release_date,
-                            category, vote_average, vote_count, popularity, adult, original_language, video,
-                            runtime, budget, revenue, status, homepage)
-        VALUES (#{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate},
-                #{category}, #{voteAverage}, #{voteCount}, #{popularity}, #{adult}, #{originalLanguage}, #{video},
-                #{runtime}, #{budget}, #{revenue}, #{status}, #{homepage})
+        INSERT INTO movies (
+            id, title, original_title, overview, poster_path, backdrop_path, release_date,
+            vote_average, vote_count, popularity, original_language, runtime, movie_cd, audience_count
+        )
+        VALUES (
+                   #{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate},
+                   #{voteAverage}, #{voteCount}, #{popularity}, #{originalLanguage}, #{runtime}, #{movieCd}, #{audienceCount}
+               )
             ON DUPLICATE KEY UPDATE
                                  title = VALUES(title),
                                  original_title = VALUES(original_title),
@@ -20,47 +22,44 @@
                                  poster_path = VALUES(poster_path),
                                  backdrop_path = VALUES(backdrop_path),
                                  release_date = VALUES(release_date),
-                                 category = VALUES(category),
                                  vote_average = VALUES(vote_average),
                                  vote_count = VALUES(vote_count),
                                  popularity = VALUES(popularity),
-                                 adult = VALUES(adult),
                                  original_language = VALUES(original_language),
-                                 video = VALUES(video),
                                  runtime = VALUES(runtime),
-                                 budget = VALUES(budget),
-                                 revenue = VALUES(revenue),
-                                 status = VALUES(status),
-                                 homepage = VALUES(homepage);
+                                 movie_cd = VALUES(movie_cd),
+                                 audience_count = VALUES(audience_count);
     </insert>
 
     <!-- 배우 배치 insert -->
     <insert id="insertCastBatch" parameterType="map">
-        INSERT INTO cast (movie_id, person_id, name, character_name)
+        INSERT INTO cast (movie_id, person_id, name, character_name, profile_path)
         VALUES
         <foreach collection="castList" item="cast" separator=",">
-            (#{movieId}, #{cast.id}, #{cast.name}, #{cast.character_name})
+            (#{movieId}, #{cast.id}, #{cast.name}, #{cast.characterName}, #{cast.profilePath})
         </foreach>
         ON DUPLICATE KEY UPDATE
         name = VALUES(name),
-        character_name = VALUES(character_name);
+        character_name = VALUES(character_name),
+        profile_path = VALUES(profile_path);
     </insert>
 
     <!-- 감독/작업자 배치 insert -->
     <insert id="insertCrewBatch" parameterType="map">
-        INSERT INTO crew (movie_id, person_id, name, job)
+        INSERT INTO crew (movie_id, person_id, name, job, profile_path)
         VALUES
         <foreach collection="crewList" item="crew" separator=",">
-            (#{movieId}, #{crew.id}, #{crew.name}, #{crew.job})
+            (#{movieId}, #{crew.id}, #{crew.name}, #{crew.job}, #{crew.profilePath})
         </foreach>
         ON DUPLICATE KEY UPDATE
         name = VALUES(name),
-        job = VALUES(job);
+        job = VALUES(job),
+        profile_path = VALUES(profile_path);
     </insert>
 
-    <!-- 특정 카테고리 영화 삭제 -->
-    <delete id="deleteCategoryMovies">
-        DELETE FROM movies WHERE category = #{category};
+    <!-- 특정 영화 삭제 -->
+    <delete id="deleteMovieById">
+        DELETE FROM movies WHERE id = #{movieId};
     </delete>
 
     <!-- 전체 영화 조회 -->
