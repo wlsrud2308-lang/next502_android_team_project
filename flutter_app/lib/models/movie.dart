@@ -1,37 +1,105 @@
 class Movie {
-  final int id;
+  final int id;                 // TMDb movie ID
   final String title;
+  final String originalTitle;
   final String overview;
-  final String? posterPath;   // null 가능
-  final String? backdropPath; // 상세 화면용
-  final String? category;
+  final String? posterPath;
+  final String? backdropPath;
+  final String? releaseDate;
   final double? voteAverage;
-  final int? runtime;         // 서버에서 null 가능
-  final String? homepage;     // 서버에서 null 가능
+  final int? voteCount;
+  final double? popularity;
+  final String? originalLanguage;
+  final int? runtime;
+
+  final List<Cast>? cast;       // 배우
+  final List<Crew>? crew;       // 감독/작업자
 
   Movie({
     required this.id,
     required this.title,
+    required this.originalTitle,
     required this.overview,
     this.posterPath,
     this.backdropPath,
-    this.category,
+    this.releaseDate,
     this.voteAverage,
+    this.voteCount,
+    this.popularity,
+    this.originalLanguage,
     this.runtime,
-    this.homepage,
+    this.cast,
+    this.crew,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
-      id: json['id'] ?? 0,
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       title: json['title'] ?? '',
+      originalTitle: json['original_title'] ?? '',
       overview: json['overview'] ?? '',
-      posterPath: json['poster_path'],    // TMDB JSON key와 맞춤
-      backdropPath: json['backdrop_path'],
-      category: json['category'],
-      voteAverage: (json['vote_average'] ?? 0).toDouble(),
-      runtime: json['runtime'],
-      homepage: json['homepage'],
+      posterPath: json['poster_path'] as String?,
+      backdropPath: json['backdrop_path'] as String?,
+      releaseDate: json['release_date'] as String?,
+      voteAverage: json['vote_average'] != null
+          ? (json['vote_average'] as num).toDouble()
+          : null,
+      voteCount: json['vote_count'] as int?,
+      popularity: json['popularity'] != null ? (json['popularity'] as num).toDouble() : null,
+      originalLanguage: json['original_language'] as String?,
+      runtime: json['runtime'] as int?,
+      cast: json['cast'] != null
+          ? (json['cast'] as List).map((e) => Cast.fromJson(e)).toList()
+          : null,
+      crew: json['crew'] != null
+          ? (json['crew'] as List).map((e) => Crew.fromJson(e)).toList()
+          : null,
+    );
+  }
+}
+
+class Cast {
+  final int id;
+  final String name;
+  final String? characterName;
+  final String? profilePath;
+
+  Cast({
+    required this.id,
+    required this.name,
+    this.characterName,
+    this.profilePath,
+  });
+
+  factory Cast.fromJson(Map<String, dynamic> json) {
+    return Cast(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name'] ?? '',
+      characterName: json['character_name'] ?? json['character'] as String?,
+      profilePath: json['profile_path'] as String?,
+    );
+  }
+}
+
+class Crew {
+  final int id;
+  final String name;
+  final String? job;
+  final String? profilePath;
+
+  Crew({
+    required this.id,
+    required this.name,
+    this.job,
+    this.profilePath,
+  });
+
+  factory Crew.fromJson(Map<String, dynamic> json) {
+    return Crew(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name'] ?? '',
+      job: json['job'] as String?,
+      profilePath: json['profile_path'] as String?,
     );
   }
 }
