@@ -2,11 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_app/screens/detail_screen.dart';
+import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/login_screen.dart';
 import 'package:flutter_app/screens/movie_info.dart';
 import 'package:flutter_app/widgets/movie_list_page.dart';
 import 'firebase_options.dart';
-import 'models/tmdb_sync_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,7 +66,7 @@ class MainMapScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => TMDBSyncPage()),
+                MaterialPageRoute(builder: (_) => MovieHomeScreen()),
               );
             },
           ),

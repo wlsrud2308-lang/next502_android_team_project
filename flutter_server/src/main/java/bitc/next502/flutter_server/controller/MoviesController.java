@@ -21,10 +21,4 @@ public class MoviesController {
   public List<MoviesDTO> movies(){
     return moviesService.getMovies();
   }
-
-  @PostMapping("/sync")
-  public String syncMovies(){
-    moviesService.updateAllMovies();
-    return "success";
-  }
 }
