@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import '../widgets/review_list.dart';
+import '../widgets/review_input.dart';
 
 class MovieDetailScreen2 extends StatefulWidget {
   final int movieId;
@@ -12,10 +14,11 @@ class MovieDetailScreen2 extends StatefulWidget {
 
 class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
   late Future<Map<String, dynamic>> movieFuture;
+  late Future<List<Map<String, dynamic>>> reviewFuture;
 
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://10.0.2.2:8080', // 🔥 baseUrl 통일 추천
+      baseUrl: 'http://10.0.2.2:8080', // 🔥 baseUrl 통일
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
     ),
@@ -25,23 +28,36 @@ class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
   void initState() {
     super.initState();
     movieFuture = fetchMovie(widget.movieId);
+    reviewFuture = fetchReviews(widget.movieId);
   }
 
-  // ✅ Dio API 호출
+  // 영화 상세 호출
   Future<Map<String, dynamic>> fetchMovie(int movieId) async {
     try {
       final res = await _dio.get("/movies/$movieId");
-      print("응답 데이터: ${res.data}");
+      print("영화 응답 데이터: ${res.data}");
       return Map<String, dynamic>.from(res.data);
     } catch (e) {
-      print("API 오류: $e");
-      throw Exception("데이터 불러오기 실패");
+      print("영화 API 오류: $e");
+      throw Exception("영화 데이터 불러오기 실패");
+    }
+  }
+
+  // 리뷰 호출
+  Future<List<Map<String, dynamic>>> fetchReviews(int movieId) async {
+    try {
+      final res = await _dio.get("/reviews/movie/$movieId"); // 백엔드 API 맞춰서
+      print("리뷰 응답: ${res.data}");
+      return List<Map<String, dynamic>>.from(res.data);
+    } catch (e) {
+      print("리뷰 API 오류: $e");
+      return [];
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    return FutureBuilder<Map<String, dynamic>>(
       future: movieFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -51,7 +67,7 @@ class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
           );
         }
 
-        if (snapshot.hasError) {
+        if (snapshot.hasError || snapshot.data == null) {
           return const Scaffold(
             backgroundColor: Color(0xFF0D0D0D),
             body: Center(
@@ -78,6 +94,20 @@ class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
                 _buildOverview(movie),
                 _buildCast(movie),
                 _buildDirector(movie),
+                // 리뷰 위젯
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: reviewFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    final reviews = snapshot.data ?? [];
+                    return ReviewList(reviews: reviews);
+                  },
+                ),
               ],
             ),
           ),
@@ -89,7 +119,6 @@ class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
   // 🎬 포스터
   Widget _buildPoster(Map movie) {
     final backdropPath = movie['backdropPath'] ?? movie['backdrop_path'];
-
     return backdropPath != null && backdropPath.toString().isNotEmpty
         ? Image.network(
       "https://image.tmdb.org/t/p/w780$backdropPath",
@@ -109,7 +138,6 @@ class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
   // 🎬 제목 + 개봉일
   Widget _buildTitle(Map movie) {
     final releaseDate = movie['releaseDate'] ?? movie['release_date'];
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -202,12 +230,11 @@ class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
       ),
     );
   }
+
+  // 👥 출연 배우
   Widget _buildCast(Map movie) {
     final castList = movie['cast'];
-
-    if (castList == null || castList.isEmpty) {
-      return const SizedBox();
-    }
+    if (castList == null || castList.isEmpty) return const SizedBox();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -233,7 +260,6 @@ class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
               itemCount: castList.length,
               itemBuilder: (context, index) {
                 final cast = castList[index];
-
                 return Container(
                   width: 80,
                   margin: const EdgeInsets.only(left: 16),
@@ -276,16 +302,15 @@ class _MovieDetailScreen2State extends State<MovieDetailScreen2> {
     );
   }
 
+  // 🎬 감독
   Widget _buildDirector(Map movie) {
     final crewList = movie['crew'];
-
     if (crewList == null) return const SizedBox();
 
     final director = crewList.firstWhere(
           (c) => c['job'] == 'Director',
       orElse: () => null,
     );
-
     if (director == null) return const SizedBox();
 
     return Padding(
