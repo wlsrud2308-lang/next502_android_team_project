@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/service/movie_service.dart';
 import '../models/movie.dart';
+import '../service/movie_service.dart';
 
 class MovieListScreen extends StatefulWidget {
   const MovieListScreen({super.key});
@@ -15,6 +15,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
   String _selectedFilter = 'all'; // all, popular, topRated, nowPlaying
   bool _isLoading = true;
 
+  // 🔥 UI에서 임시 찜 상태 관리
+  final Map<int, bool> _favoriteMap = {};
+
   @override
   void initState() {
     super.initState();
@@ -22,28 +25,21 @@ class _MovieListScreenState extends State<MovieListScreen> {
   }
 
   Future<void> _loadMovies() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       final movies = await MovieService.fetchMoviesByCategory(_selectedFilter);
-      setState(() {
-        _movies = movies;
-      });
+      setState(() => _movies = movies);
     } catch (e) {
       print('영화 데이터를 불러오는데 실패했습니다: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
   List<Movie> get _filteredMovies {
     if (_searchController.text.isEmpty) return _movies;
     final query = _searchController.text.toLowerCase();
-    return _movies.where((movie) => movie.title.toLowerCase().contains(query)).toList();
+    return _movies.where((m) => m.title.toLowerCase().contains(query)).toList();
   }
 
   @override
@@ -93,19 +89,13 @@ class _MovieListScreenState extends State<MovieListScreen> {
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
               icon: const Icon(Icons.cancel, color: Colors.white24, size: 18),
-              onPressed: () {
-                setState(() {
-                  _searchController.clear();
-                });
-              },
+              onPressed: () => setState(() => _searchController.clear()),
             )
                 : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 11),
           ),
-          onChanged: (value) {
-            setState(() {});
-          },
+          onChanged: (value) => setState(() {}),
         ),
       ),
     );
@@ -130,7 +120,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
             const Spacer(),
             DropdownButton<String>(
               value: _selectedFilter,
-              underline: const SizedBox(), // 테두리 제거
+              underline: const SizedBox(),
               dropdownColor: const Color(0xFF1A1A1A),
               style: const TextStyle(color: Colors.white),
               iconEnabledColor: Colors.white38,
@@ -142,9 +132,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
               ],
               onChanged: (value) {
                 if (value != null) {
-                  setState(() {
-                    _selectedFilter = value;
-                  });
+                  setState(() => _selectedFilter = value);
                   _loadMovies();
                 }
               },
@@ -158,23 +146,19 @@ class _MovieListScreenState extends State<MovieListScreen> {
   Widget _buildMovieList() {
     if (_filteredMovies.isEmpty) {
       return const Center(
-        child: Text(
-          '검색 결과가 없습니다',
-          style: TextStyle(color: Colors.white38),
-        ),
+        child: Text('검색 결과가 없습니다', style: TextStyle(color: Colors.white38)),
       );
     }
 
     return ListView.builder(
       itemCount: _filteredMovies.length,
-      itemBuilder: (context, index) {
-        final movie = _filteredMovies[index];
-        return _buildMovieListItem(movie);
-      },
+      itemBuilder: (context, index) => _buildMovieListItem(_filteredMovies[index]),
     );
   }
 
   Widget _buildMovieListItem(Movie movie) {
+    final isFav = _favoriteMap[movie.id] ?? false;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -182,16 +166,44 @@ class _MovieListScreenState extends State<MovieListScreen> {
       ),
       child: Row(
         children: [
+          // ⭐ 찜 버튼 (UI에서만 반응)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _favoriteMap[movie.id] = !isFav;
+              });
+            },
+            child: Icon(
+              isFav ? Icons.star : Icons.star_border,
+              color: isFav ? Colors.orangeAccent : Colors.white10,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // 🎬 포스터
           Container(
             width: 44,
             height: 60,
             decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(4),
+              color: const Color(0xFF1A1A1A),
             ),
-            child: const Icon(Icons.movie_filter, color: Colors.white10, size: 24),
+            child: movie.posterPath != null
+                ? ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Image.network(
+                "https://image.tmdb.org/t/p/w200${movie.posterPath}",
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.movie, color: Colors.white24),
+              ),
+            )
+                : const Icon(Icons.movie, color: Colors.white24),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
+
+          // 제목 + 개봉일
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,11 +214,27 @@ class _MovieListScreenState extends State<MovieListScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "평점: ${movie.voteAverage ?? '-'}  ·  개봉일: ${movie.releaseDate ?? '-'}",
+                  "개봉일: ${movie.releaseDate ?? '-'}",
                   style: const TextStyle(color: Colors.white38, fontSize: 11),
                 ),
               ],
             ),
+          ),
+
+          // 평점
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                (movie.voteAverage ?? 0).toStringAsFixed(1),
+                style: const TextStyle(
+                  color: Colors.purpleAccent,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Text("평점", style: TextStyle(color: Colors.white24, fontSize: 10)),
+            ],
           ),
         ],
       ),

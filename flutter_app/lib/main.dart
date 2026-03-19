@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
 
           // 무비 디테일 스크린 확인용
           if (snapshot.hasData) {
-            return const MovieDetailScreen2(movieId: 13,);
+            return const MovieHomeScreen();
           }
 
           // 로그인 정보가 없으면 로그인 페이지로!
@@ -98,4 +98,5 @@ class MainMapScreen extends StatelessWidget {
       body: const Center(child: Text("여기에 지도를 띄울 예정입니다!")),
     );
   }
+
 }

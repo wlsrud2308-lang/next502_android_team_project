@@ -41,21 +41,29 @@ class Movie {
 
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+
       title: json['title'] ?? '',
       originalTitle: json['original_title'] ?? '',
       overview: json['overview'] ?? '',
-      posterPath: json['poster_path'] as String?,
-      backdropPath: json['backdrop_path'] as String?,
-      releaseDate: json['release_date'] as String?,
-      voteAverage: json['vote_average'] != null ? (json['vote_average'] as num).toDouble() : null,
-      voteCount: json['vote_count'] as int?,
-      popularity: json['popularity'] != null ? (json['popularity'] as num).toDouble() : null,
-      originalLanguage: json['original_language'] as String?,
-      runtime: json['runtime'] as int?,
-      isNowPlaying: json['is_now_playing'] as int?,
-      isPopular: json['is_popular'] as int?,
-      isTopRated: json['is_top_rated'] as int?,
+
+      // 🔥 서버 JSON 맞춤 (핵심)
+      posterPath: json['poster_path'],
+      backdropPath: json['backdrop_path'],
+      releaseDate: json['release_date'],
+      voteAverage: json['vote_average'] != null
+          ? (json['vote_average'] as num).toDouble()
+          : null,
+
+      voteCount: json['vote_count'],
+      popularity: json['popularity'] != null
+          ? (json['popularity'] as num).toDouble()
+          : null,
+      originalLanguage: json['original_language'],
+      runtime: json['runtime'],
+
       cast: json['cast'] != null
           ? (json['cast'] as List).map((e) => Cast.fromJson(e)).toList()
           : null,
