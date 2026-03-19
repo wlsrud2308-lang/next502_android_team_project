@@ -130,13 +130,24 @@ class PostServiceImpl implements PostService {
   }
 
   @override
-  Future<bool> insertComment(String content, int postId, int userNum) async {
+  Future<bool> insertComment(
+      String content,
+      int postId,
+      int userNum,
+      String targetType,
+          {int? targetId}
+      ) async {
     try {
       final body = jsonEncode({
         'content': content,
         'postId': postId,
         'userNum': userNum,
+        'targetType': targetType,
+        'targetId': targetId,
       });
+
+      print("📤 [댓글 등록 요청] Body: $body");
+
       final response = await http.post(
         Uri.parse('$baseUrl/comments'),
         headers: _headers,
@@ -176,6 +187,7 @@ class PostServiceImpl implements PostService {
         "commentId": commentId,
         "userNum": userNum,
       });
+
       final response = await http.delete(
         Uri.parse('$baseUrl/comments'),
         headers: _headers,

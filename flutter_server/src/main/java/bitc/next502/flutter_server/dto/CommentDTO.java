@@ -9,6 +9,8 @@ public class CommentDTO {
     private String content;
     private int userNum;
     private int postId;
+    private String targetType;
+    private Integer targetId;
     private String nickname;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
