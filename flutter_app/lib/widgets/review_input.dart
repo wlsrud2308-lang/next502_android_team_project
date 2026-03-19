@@ -52,38 +52,47 @@ class _ReviewInputState extends State<ReviewInput> {
     });
 
     try {
-      final userRes = await _dio.get("/users/uid/${currentUser.uid}");
-      final userData = Map<String, dynamic>.from(userRes.data);
+      final idToken = await currentUser.getIdToken();
 
-      final userNum = userData['userNum'] ?? userData['user_num'];
+      final res = await _dio.post(
+        "/reviews",
+        data: {
+          "movieId": widget.movieId,
+          "rating": _rating,
+          "content": _contentController.text.trim(),
+        },
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $idToken",
+          },
+        ),
+      );
 
-      if (userNum == null) {
-        throw Exception("user_num 조회 실패");
-      }
-
-      await _dio.post("/reviews", data: {
-        "movieId": widget.movieId,
-        "movie_id": widget.movieId,
-        "rating": _rating,
-        "ratting": _rating,
-        "content": _contentController.text.trim(),
-        "userNum": userNum,
-        "user_num": userNum,
-      });
+      debugPrint("리뷰 등록 status: ${res.statusCode}");
+      debugPrint("리뷰 등록 응답: ${res.data}");
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("리뷰가 등록되었습니다!")),
       );
 
       _contentController.clear();
-
       setState(() {
         _rating = 0;
       });
 
       widget.onReviewSubmitted();
+    } on DioException catch (e) {
+      debugPrint("리뷰 등록 Dio 오류");
+      debugPrint("요청 URL: ${e.requestOptions.uri}");
+      debugPrint("상태 코드: ${e.response?.statusCode}");
+      debugPrint("응답 데이터: ${e.response?.data}");
+      debugPrint("에러 메시지: ${e.message}");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("리뷰 등록 실패")),
+      );
     } catch (e) {
-      print("리뷰 등록 오류: $e");
+      debugPrint("리뷰 등록 일반 오류: $e");
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("리뷰 등록 실패")),

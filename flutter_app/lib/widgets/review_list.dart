@@ -22,6 +22,9 @@ class _ReviewListState extends State<ReviewList> {
 
   late Future<List<Review>> _reviewsFuture;
 
+  // 테스트용
+  final int myUserNum = 1;
+
   @override
   void initState() {
     super.initState();
@@ -31,45 +34,135 @@ class _ReviewListState extends State<ReviewList> {
   Future<List<Review>> fetchReviews() async {
     try {
       final res = await _dio.get("/reviews/${widget.movieId}");
-      print("리뷰 조회 주소: ${res.realUri}");
-      print("리뷰 조회 응답: ${res.data}");
+      debugPrint("리뷰 조회 주소: ${res.realUri}");
+      debugPrint("리뷰 조회 응답: ${res.data}");
 
       return (res.data as List)
           .map((e) => Review.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     } catch (e) {
-      print("리뷰 조회 오류: $e");
+      debugPrint("리뷰 조회 오류: $e");
       rethrow;
     }
   }
-  // Future<List<Review>> fetchReviews() async {
-  //   final res = await _dio.gePerforming hot restart...
-  // Syncing files to device sdk gphone64 x86 64...
-  // Restarted application in 1,357ms.
-  // D/WindowOnBackDispatcher( 8501): setTopOnBackInvokedCallback (unwrapped): android.view.ImeBackAnimationController@6e04a32
-  // D/FlutterJNI( 8501): Sending viewport metrics to the engine.
-  // D/FlutterJNI( 8501): Sending viewport metrics to the engine.
-  // D/WindowOnBackDispatcher( 8501): setTopOnBackInvokedCallback (unwrapped): io.flutter.embedding.android.FlutterActivity$1@27cf7a3
-  // I/flutter ( 8501): 리뷰 조회 오류: DioException [bad response]: This exception was thrown because the response has a status code of 500 and RequestOptions.validateStatus was configured to throw for this status code.
-  // I/flutter ( 8501): The status code of 500 has the following meaning: "Server error - the server failed to fulfil an apparently valid request"
-  // I/flutter ( 8501): Read more about status codes at https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-  // I/flutter ( 8501): In order to resolve this exception you typically have either to verify and fix your request code or you have to fix the server code.
-  // I/ImeTracker( 8501): com.example.flutter_app:dac4c8bd: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
-  // D/InsetsController( 8501): show(ime())
-  // I/ImeTracker( 8501): com.example.flutter_app:dac4c8bd: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-  // I/AssistStructure( 8501): Flattened final assist data: 500 bytes, containing 1 windows, 3 views
-  // D/InputConnectionAdaptor( 8501): The input method toggled cursor monitoring on
-  // I/ImeTracker( 8501): com.example.flutter_app:5a35cbc4: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
-  // D/InsetsController( 8501): show(ime())
-  // I/ImeTracker( 8501): com.example.flutter_app:5a35cbc4: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-  // I/flutter ( 8501): 리뷰 등록 오류: DioException [bad response]: This exception was thrown because the response has a status code of 404 and RequestOptions.validateStatus was configured to throw for this status code.
-  // I/flutter ( 8501): The status code of 404 has the following meaning: "Client error - the request contains bad syntax or cannot be fulfilled"
-  // I/flutter ( 8501): Read more about status codes at https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-  // I/flutter ( 8501): In order to resolve this exception you typically have either to verify and fix your request code or you have to fix the server code.t("/reviews/${widget.movieId}");
-  //   return (res.data as List)
-  //       .map((e) => Review.fromJson(Map<String, dynamic>.from(e)))
-  //       .toList();
-  // }
+
+  double getAverageRating(List<Review> reviews) {
+    if (reviews.isEmpty) return 0.0;
+    final total = reviews.fold<double>(0.0, (sum, r) => sum + r.rating);
+    return total / reviews.length;
+  }
+
+  Future<void> _deleteReview(int reviewId) async {
+    try {
+      await _dio.delete("/reviews/$reviewId");
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("리뷰가 삭제되었습니다.")),
+      );
+      refresh();
+    } on DioException catch (e) {
+      debugPrint("리뷰 삭제 오류: ${e.response?.data}");
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("리뷰 삭제 실패")),
+      );
+    }
+  }
+
+  Future<void> _updateReview(int reviewId, double rating, String content) async {
+    try {
+      await _dio.put(
+        "/reviews/$reviewId",
+        data: {
+          "rating": rating,
+          "content": content,
+        },
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("리뷰가 수정되었습니다.")),
+      );
+      refresh();
+    } on DioException catch (e) {
+      debugPrint("리뷰 수정 오류: ${e.response?.data}");
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("리뷰 수정 실패")),
+      );
+    }
+  }
+
+  void _showEditDialog(Review review) {
+    final controller = TextEditingController(text: review.content);
+    double newRating = review.rating;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF141414),
+          title: const Text(
+            "리뷰 수정",
+            style: TextStyle(color: Colors.white),
+          ),
+          content: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RatingBar(
+                    initialRating: newRating,
+                    minRating: 0.5,
+                    allowHalfRating: true,
+                    itemCount: 5,
+                    ratingWidget: RatingWidget(
+                      full: const Icon(Icons.star, color: Colors.yellowAccent),
+                      half: const Icon(Icons.star_half, color: Colors.yellowAccent),
+                      empty: const Icon(Icons.star_border, color: Colors.yellowAccent),
+                    ),
+                    onRatingUpdate: (value) {
+                      setDialogState(() {
+                        newRating = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    maxLines: 3,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      hintText: "리뷰 내용을 입력하세요",
+                      hintStyle: TextStyle(color: Colors.white38),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("취소"),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _updateReview(
+                  review.reviewId,
+                  newRating,
+                  controller.text.trim(),
+                );
+                if (!context.mounted) return;
+                Navigator.pop(context);
+              },
+              child: const Text("저장"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void refresh() {
     setState(() {
@@ -102,6 +195,7 @@ class _ReviewListState extends State<ReviewList> {
         }
 
         final reviews = snapshot.data ?? [];
+        final averageRating = getAverageRating(reviews);
 
         if (reviews.isEmpty) {
           return const Padding(
@@ -120,21 +214,33 @@ class _ReviewListState extends State<ReviewList> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text(
-                  "리뷰",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    const Text(
+                      "리뷰",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      "평균 ${averageRating.toStringAsFixed(1)}",
+                      style: const TextStyle(
+                        color: Colors.yellowAccent,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               ...reviews.map(
                     (r) => Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -145,6 +251,15 @@ class _ReviewListState extends State<ReviewList> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          r.nickname.isEmpty ? "익명" : r.nickname,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         RatingBarIndicator(
                           rating: r.rating,
                           itemBuilder: (context, index) => const Icon(
@@ -172,6 +287,20 @@ class _ReviewListState extends State<ReviewList> {
                             fontSize: 10,
                           ),
                         ),
+                        if (r.userNum == myUserNum)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () => _showEditDialog(r),
+                                child: const Text("수정"),
+                              ),
+                              TextButton(
+                                onPressed: () => _deleteReview(r.reviewId),
+                                child: const Text("삭제"),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
