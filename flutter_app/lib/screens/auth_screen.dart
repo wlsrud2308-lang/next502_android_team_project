@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter_app/screens/movie_info.dart';
+
+import 'home_screen.dart'; // 홈 화면 이동을 위해 추가
 
 // Toast 메시지
 void showToast(String msg) {
@@ -86,9 +89,15 @@ class _AuthScreen extends State<AuthScreen> {
 
       if (user.user!.emailVerified) {
         if (!mounted) return;
-        setState(() {
-          isInput = false;
-        });
+
+        showToast("로그인 성공!");
+
+        // 로그인 성공 시 결과 화면 대신 홈 화면으로 강제 이동
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MovieHomeScreen()),
+              (route) => false,
+        );
       } else {
         showToast("이메일 인증을 완료해주세요");
       }
@@ -212,7 +221,7 @@ class _AuthScreen extends State<AuthScreen> {
     ];
   }
 
-  // 로그인 성공 UI
+  // 로그인 성공 UI (회원가입 완료 시에만 노출됨)
   List<Widget> getResultWidget() {
     String? resultEmail = FirebaseAuth.instance.currentUser?.email;
 

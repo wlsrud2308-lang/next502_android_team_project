@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart'; //  Firebase Auth  추가
+import 'package:flutter_app/screens/movie_info.dart';
+
+import 'home_screen.dart'; //  홈 화면 이동을 위해 추가
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -9,8 +13,14 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
+  //  Firebase에서 현재 로그인한 유저 정보를 가져옴
+  final User? currentUser = FirebaseAuth.instance.currentUser;
+
   @override
   Widget build(BuildContext context) {
+    // 유저 정보가 있으면 이메일을 가져오고, 없으면 기본 텍스트 표시
+    final String displayEmail = currentUser?.email ?? "이메일 정보 없음";
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
@@ -32,7 +42,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             // 1. 내 계정 정보 섹션
             _buildSectionTitle("로그인 정보"),
-            _buildInfoTile("이메일 계정", "movie_lover@gmail.com", isEditable: false),
+            // 🔥 하드코딩 대신 실제 로그인한 이메일 연동
+            _buildInfoTile("이메일 계정", displayEmail, isEditable: false),
             _buildInfoTile("비밀번호 변경", "마지막 변경: 3개월 전", isEditable: true),
 
             const SizedBox(height: 30),
@@ -50,7 +61,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
               child: Column(
                 children: [
                   TextButton(
-                    onPressed: () {},
+                    //  4. 로그아웃 기능 및 화면 이동 로직 추가
+                    onPressed: () async {
+                      // Firebase 로그아웃 처리
+                      await FirebaseAuth.instance.signOut();
+
+                      // MovieHomeScreen으로 이동
+                      if (!mounted) return;
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MovieHomeScreen()),
+                            (route) => false,
+                      );
+                    },
                     child: const Text("로그아웃", style: TextStyle(color: Colors.redAccent, fontSize: 14)),
                   ),
                   TextButton(
