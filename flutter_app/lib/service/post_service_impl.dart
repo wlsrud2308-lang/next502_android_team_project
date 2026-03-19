@@ -12,12 +12,33 @@ class PostServiceImpl implements PostService {
     "Accept": "application/json",
   };
 
-  // 1. 게시판별 목록 조회 (추가된 기능)
-  // boardType: '자유', '국내', '해외' 또는 null(전체)
+  @override
+  Future<int> getUserNumByUid(String uid) async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/user/num').replace(
+        queryParameters: {'uid': uid},
+      );
+
+      final response = await http.get(uri, headers: {"Accept": "application/json"});
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is int) return decoded;
+        return decoded['userNum'] as int;
+      } else {
+        print("❌ [getUserNumByUid 실패]: ${response.statusCode}");
+        throw Exception('유저 번호 조회 실패');
+      }
+    } catch (e) {
+      print("❌ [getUserNumByUid 에러]: $e");
+      rethrow;
+    }
+  }
+
+  // 1. 게시판별 목록 조회
   @override
   Future<List<PostDto>> getPostsByBoard(String? boardType) async {
     try {
-      // 쿼리 파라미터 생성 (예: ?boardType=국내)
       final uri = Uri.parse('$baseUrl/api/post').replace(
         queryParameters: boardType != null ? {'boardType': boardType} : null,
       );
@@ -56,19 +77,17 @@ class PostServiceImpl implements PostService {
     }
   }
 
-  // 2. 게시글 등록 (boardType, category 파라미터 대응)
+  // 2. 게시글 등록
   @override
   Future<bool> insertPost(String title, String content, int userNum, {String? boardType, String? category}) async {
     try {
       final body = jsonEncode({
-        "boardType": boardType ?? "자유", // 기본값 설정
-        "category": category ?? "잡담",   // 기본값 설정
+        "boardType": boardType ?? "자유",
+        "category": category ?? "잡담",
         "title": title,
         "content": content,
         "userNum": userNum,
       });
-
-      print("📤 [게시글 등록 요청] Body: $body");
 
       final response = await http.post(
         Uri.parse('$baseUrl/api/post'),
@@ -76,7 +95,6 @@ class PostServiceImpl implements PostService {
         body: body,
       );
 
-      // 서버가 201 Created 또는 200 OK를 반환하는지 확인
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       print("❌ [게시글 등록 에러]: $e");
@@ -94,7 +112,6 @@ class PostServiceImpl implements PostService {
         body: body,
       );
 
-      // 서버 Controller가 ResponseEntity<Boolean>을 주므로 응답 바디 확인
       if (response.statusCode == 200) {
         return response.body.trim().toLowerCase() == "true";
       }
@@ -138,7 +155,7 @@ class PostServiceImpl implements PostService {
     }
   }
 
-  // --- 댓글 관련 로직 (기존 유지) ---
+  // --- 댓글 관련 로직 ---
 
   @override
   Future<List<CommentDto>> getComments(int postId) async {
@@ -204,12 +221,10 @@ class PostServiceImpl implements PostService {
   @override
   Future<List<PostDto>> searchPosts(String query) async {
     try {
-      if (query.isEmpty) {
-        return [];  // 검색어가 비어있으면 빈 리스트 반환
-      }
+      if (query.isEmpty) return [];
 
       final uri = Uri.parse('$baseUrl/api/post/search').replace(
-        queryParameters: {'query': query},  // 검색어를 쿼리 파라미터로 전송
+        queryParameters: {'query': query},
       );
 
       final response = await http.get(uri, headers: {"Accept": "application/json"});
@@ -218,7 +233,6 @@ class PostServiceImpl implements PostService {
         List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
         return body.map((item) => PostDto.fromJson(item)).toList();
       } else {
-        print("❌ [searchPosts 에러]: 서버에서 검색 결과를 받지 못했습니다.");
         return [];
       }
     } catch (e) {

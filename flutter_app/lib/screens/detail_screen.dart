@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/post_model.dart';
 import '../models/comment_model.dart';
 import '../service/post_service.dart';
@@ -25,19 +26,60 @@ class _DetailScreenState extends State<DetailScreen> {
   int? _replyToCommentId;
   String? _replyToNickname;
 
+  // 🔥 Firebase 연동 상태 변수
+  int? _resolvedUserNum;
+  bool _isUserLoading = true;
+
   static const Color bgDark = Color(0xFF121212);
   static const Color contentDark = Color(0xFF1E1E1E);
   static const Color accentPurple = Color(0xFF9D50BB);
 
-  // TODO: 실제 앱에서는 로그인된 유저 정보를 가져와야 합니다.
-  final int _myUserNum = 123;
+  int get _myUserNum => _resolvedUserNum ?? -1;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _prepareUserInfo();
   }
 
+  Future<void> _prepareUserInfo() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        print("⚠️ [Auth] 로그인된 파이어베이스 유저가 없습니다.");
+        if (mounted) {
+          setState(() {
+            _resolvedUserNum = -1;
+            _isUserLoading = false;
+          });
+        }
+      } else {
+        print("✅ [Auth] UID 발견: ${user.uid}. 서버에서 번호 조회 시작...");
+
+        int num = await _postService.getUserNumByUid(user.uid);
+
+        print("✅ [Server] 조회된 userNum: $num");
+
+        if (mounted) {
+          setState(() {
+            _resolvedUserNum = num;
+            _isUserLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print("❌ [UserInfo 에러] 원인: $e");
+      if (mounted) {
+        setState(() {
+          _resolvedUserNum = -1;
+          _isUserLoading = false;
+        });
+      }
+    }
+
+    _loadData();
+  }
   @override
   void dispose() {
     _commentController.dispose();
@@ -119,7 +161,6 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
-
   Future<void> _handleDeletePost() async {
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -169,8 +210,13 @@ class _DetailScreenState extends State<DetailScreen> {
     if (result == true) _loadData();
   }
 
+
   @override
   Widget build(BuildContext context) {
+    if (_isUserLoading) {
+      return const Scaffold(backgroundColor: bgDark, body: Center(child: CircularProgressIndicator(color: accentPurple)));
+    }
+
     return FutureBuilder<PostDto>(
       future: _postFuture,
       builder: (context, snapshot) {
@@ -182,6 +228,7 @@ class _DetailScreenState extends State<DetailScreen> {
         }
 
         final post = snapshot.data!;
+        bool isPostAuthor = post.userNum == _myUserNum;
 
         return Scaffold(
           backgroundColor: bgDark,
@@ -198,13 +245,12 @@ class _DetailScreenState extends State<DetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildPostHeader(post),
+                _buildPostHeader(post, isPostAuthor),
                 _buildPostContent(post),
                 _buildReactionSection(post),
                 Container(height: 8, color: Colors.black),
                 _buildCommentHeader(post.commentCnt),
 
-                // 댓글 리스트 FutureBuilder (기존 유지)
                 FutureBuilder<List<CommentDto>>(
                   future: _commentsFuture,
                   builder: (context, commentSnapshot) {
@@ -248,8 +294,9 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Widget _buildPostHeader(PostDto post) {
-    bool isAuthor = post.userNum == _myUserNum;
+  // ====================== UI 컴포넌트 ======================
+
+  Widget _buildPostHeader(PostDto post, bool isAuthor) {
     return Container(
       color: contentDark,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -307,13 +354,9 @@ class _DetailScreenState extends State<DetailScreen> {
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color.withOpacity(0.5), width: 0.5),
       ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
-      ),
+      child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }
-
 
   Widget _buildPostContent(PostDto post) {
     return Container(
@@ -407,6 +450,6 @@ class _DetailScreenState extends State<DetailScreen> {
 
   void _showMsg(String text) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text), behavior: SnackBarBehavior.floating));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
   }
 }
