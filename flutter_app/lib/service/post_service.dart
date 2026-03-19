@@ -1,5 +1,5 @@
-import '../dto/post_dto.dart';
-import '../dto/comment_dto.dart';
+import '../models/post_model.dart';
+import '../models/comment_model.dart';
 
 abstract class PostService {
   // 1. 게시판별 목록 조회 (💡 새로 추가)
