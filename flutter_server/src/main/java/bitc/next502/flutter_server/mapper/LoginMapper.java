@@ -10,6 +10,7 @@ public interface LoginMapper {
 
   void insertUser(UserDTO user);
 
+  UserDTO getUserByUid(String uid);
 }
 
 

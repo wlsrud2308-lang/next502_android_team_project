@@ -8,4 +8,5 @@ public interface LoginService {
 
   public void signupUser(UserDTO user);
 
+  UserDTO getUserByUid(String uid);
 }

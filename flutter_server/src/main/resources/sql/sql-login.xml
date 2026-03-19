@@ -11,4 +11,18 @@
         VALUES (#{uid}, #{email}, #{nickname}, #{userName}, #{userTel}, #{userBirth}, NOW())
 
     </insert>
+
+    <select id="getUserByUid" resultType="bitc.next502.flutter_server.dto.UserDTO">
+        SELECT
+            user_num AS userNum,
+            uid,
+            email,
+            nickname,
+            user_name AS userName,
+            user_tel AS userTel,
+            user_birth AS userBirth,
+            create_date AS createDate
+        FROM users
+        WHERE uid = #{uid}
+    </select>
 </mapper>

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_auth/firebase_auth.dart'; //  Firebase Auth  추가
-import 'package:flutter_app/screens/movie_info.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dio/dio.dart';
 
-import 'home_screen.dart'; //  홈 화면 이동을 위해 추가
+
+import 'package:flutter_app/screens/home_screen.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -13,13 +14,57 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  //  Firebase에서 현재 로그인한 유저 정보를 가져옴
   final User? currentUser = FirebaseAuth.instance.currentUser;
+
+  Map<String, dynamic>? userData;
+  bool isLoading = true; // 로딩 상태
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData(); // 화면이 켜질 때 자동으로 데이터 불러오기
+  }
+
+  Future<void> _fetchUserData() async {
+    if (currentUser == null) {
+      setState(() => isLoading = false);
+      return;
+    }
+
+    try {
+      final dio = Dio();
+      // 내 파이어베이스 UID를 주소에 넣어서 백엔드에 요청
+      final response = await dio.get('http://10.0.2.2:8080/flutter/user/${currentUser!.uid}');
+
+      if (response.statusCode == 200) {
+        setState(() {
+          userData = response.data; // 가져온 데이터 저장
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("유저 정보 로드 실패: $e");
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 유저 정보가 있으면 이메일을 가져오고, 없으면 기본 텍스트 표시
+    // 로딩 중일 때는 동그라미 로딩창 표시
+    if (isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0D0D0D),
+        body: Center(child: CircularProgressIndicator(color: Colors.purpleAccent)),
+      );
+    }
+
     final String displayEmail = currentUser?.email ?? "이메일 정보 없음";
+
+    // DB에서 가져온 정보 세팅 (없으면 '정보 없음' 표시)
+    final String displayNickname = userData?['nickname'] ?? "정보 없음";
+    final String displayName = userData?['userName'] ?? "정보 없음";
+    final String displayTel = userData?['userTel']?.toString() ?? "정보 없음";
+    final String displayBirth = userData?['userBirth'] ?? "정보 없음";
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
@@ -42,17 +87,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             // 1. 내 계정 정보 섹션
             _buildSectionTitle("로그인 정보"),
-            // 🔥 하드코딩 대신 실제 로그인한 이메일 연동
             _buildInfoTile("이메일 계정", displayEmail, isEditable: false),
+
             _buildInfoTile("비밀번호 변경", "마지막 변경: 3개월 전", isEditable: true),
+
+            _buildInfoTile("닉네임", displayNickname, isEditable: true),
 
             const SizedBox(height: 30),
 
             // 2. 개인정보 섹션
             _buildSectionTitle("개인정보"),
-            _buildInfoTile("이름 / 실명", "김철수", isEditable: true),
-            _buildInfoTile("휴대폰 번호", "010-1234-5678", isEditable: true),
-            _buildInfoTile("생년월일", "1995년 05월 20일", isEditable: false),
+            // DB에서 가져온 값 세팅
+            _buildInfoTile("이름 / 실명", displayName, isEditable: true),
+            _buildInfoTile("휴대폰 번호", displayTel, isEditable: true),
+            _buildInfoTile("생년월일", displayBirth, isEditable: false),
 
             const SizedBox(height: 30),
 
@@ -61,12 +109,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               child: Column(
                 children: [
                   TextButton(
-                    //  4. 로그아웃 기능 및 화면 이동 로직 추가
                     onPressed: () async {
-                      // Firebase 로그아웃 처리
                       await FirebaseAuth.instance.signOut();
-
-                      // MovieHomeScreen으로 이동
                       if (!mounted) return;
                       Navigator.pushAndRemoveUntil(
                         context,
