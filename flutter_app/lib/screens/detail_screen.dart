@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../dto/post_dto.dart';
-import '../dto/comment_dto.dart';
+import '../models/post_model.dart';
+import '../models/comment_model.dart';
 import '../service/post_service.dart';
 import '../service/post_service_impl.dart';
 import '../widgets/comment_tile.dart';

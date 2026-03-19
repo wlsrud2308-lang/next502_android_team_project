@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../dto/comment_dto.dart';
+import '../models/comment_model.dart';
 
 class CommentTile extends StatelessWidget {
   final CommentDto comment;
