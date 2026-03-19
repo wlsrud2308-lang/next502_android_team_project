@@ -5,18 +5,25 @@
 
 <mapper namespace="bitc.next502.flutter_server.mapper.MoviesMapper">
 
-        <!-- 영화 insert -->
+    <!-- 영화 insert -->
     <insert id="insertMovie" parameterType="bitc.next502.flutter_server.dto.MoviesDTO">
         INSERT INTO movies (id, title, original_title, overview, poster_path, backdrop_path, release_date,
                             vote_average, vote_count, popularity, original_language, runtime)
         VALUES (#{id}, #{title}, #{originalTitle}, #{overview}, #{posterPath}, #{backdropPath}, #{releaseDate},
                 #{voteAverage}, #{voteCount}, #{popularity}, #{originalLanguage}, #{runtime})
             ON DUPLICATE KEY UPDATE
-                                title=VALUES(title), original_title=VALUES(original_title), overview=VALUES(overview),
-                                poster_path=VALUES(poster_path), backdrop_path=VALUES(backdrop_path), release_date=VALUES(release_date),
-                                vote_average=VALUES(vote_average), vote_count=VALUES(vote_count), popularity=VALUES(popularity),
-                                original_language=VALUES(original_language), runtime=VALUES(runtime);
-        </insert>
+                                 title=VALUES(title),
+                                 original_title=VALUES(original_title),
+                                 overview=VALUES(overview),
+                                 poster_path=VALUES(poster_path),
+                                 backdrop_path=VALUES(backdrop_path),
+                                 release_date=VALUES(release_date),
+                                 vote_average=VALUES(vote_average),
+                                 vote_count=VALUES(vote_count),
+                                 popularity=VALUES(popularity),
+                                 original_language=VALUES(original_language),
+                                 runtime=VALUES(runtime);
+    </insert>
 
     <!-- 배우 배치 insert -->
     <insert id="insertCastBatch" parameterType="map">
@@ -51,68 +58,75 @@
 
     <!-- 전체 영화 조회 -->
     <select id="getAllMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT id,
-        title,
-        original_title,
-        overview,
-        poster_path,
-        backdrop_path,
-        release_date,
-        vote_average,
-        vote_count,
-        popularity,
-        original_language,
-        runtime
+        SELECT
+            id,
+            title,
+            original_title AS originalTitle,
+            overview,
+            poster_path AS posterPath,
+            backdrop_path AS backdropPath,
+            release_date AS releaseDate,
+            vote_average AS voteAverage,
+            vote_count AS voteCount,
+            popularity,
+            original_language AS originalLanguage,
+            runtime
         FROM movies
     </select>
 
     <select id="getNowPlayingMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT id,
-        title,
-        original_title,
-        overview,
-        poster_path,
-        backdrop_path,
-        release_date,
-        vote_average,
-        vote_count,
-        popularity,
-        original_language,
-        runtime FROM movies
+        SELECT
+            id,
+            title,
+            original_title AS originalTitle,
+            overview,
+            poster_path AS posterPath,
+            backdrop_path AS backdropPath,
+            release_date AS releaseDate,
+            vote_average AS voteAverage,
+            vote_count AS voteCount,
+            popularity,
+            original_language AS originalLanguage,
+            runtime
+        FROM movies
         WHERE release_date >= CURDATE() - INTERVAL 30 DAY
         ORDER BY release_date DESC;
     </select>
 
     <select id="getPopularMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT id,
-        title,
-        original_title,
-        overview,
-        poster_path,
-        backdrop_path,
-        release_date,
-        vote_average,
-        vote_count,
-        popularity,
-        original_language,
-        runtime FROM movies
+        SELECT
+            id,
+            title,
+            original_title AS originalTitle,
+            overview,
+            poster_path AS posterPath,
+            backdrop_path AS backdropPath,
+            release_date AS releaseDate,
+            vote_average AS voteAverage,
+            vote_count AS voteCount,
+            popularity,
+            original_language AS originalLanguage,
+            runtime
+        FROM movies
         ORDER BY popularity DESC
             LIMIT 20;
     </select>
 
     <select id="getTopRatedMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT id,
-        title,
-        original_title,
-        overview,
-        poster_path,
-        backdrop_path,
-        release_date,
-        vote_average,
-        vote_count,
-        popularity,
-        original_language,
-        runtime FROM movies
+        SELECT
+            id,
+            title,
+            original_title AS originalTitle,
+            overview,
+            poster_path AS posterPath,
+            backdrop_path AS backdropPath,
+            release_date AS releaseDate,
+            vote_average AS voteAverage,
+            vote_count AS voteCount,
+            popularity,
+            original_language AS originalLanguage,
+            runtime
+        FROM movies
         ORDER BY vote_average DESC
             LIMIT 20;
     </select>
@@ -121,15 +135,15 @@
         SELECT
             id,
             title,
-            original_title,
+            original_title AS originalTitle,
             overview,
-            poster_path,
-            backdrop_path,
-            release_date,
-            vote_average,
-            vote_count,
+            poster_path AS posterPath,
+            backdrop_path AS backdropPath,
+            release_date AS releaseDate,
+            vote_average AS voteAverage,
+            vote_count AS voteCount,
             popularity,
-            original_language,
+            original_language AS originalLanguage,
             runtime
         FROM movies
         WHERE id = #{id}
@@ -139,8 +153,8 @@
         SELECT
             person_id AS id,
             name,
-            character_name,
-            profile_path
+            character_name AS characterName,
+            profile_path AS profilePath
         FROM `cast`
         WHERE movie_id = #{movieId}
     </select>
@@ -150,7 +164,7 @@
             person_id AS id,
             name,
             job,
-            profile_path
+            profile_path AS profilePath
         FROM crew
         WHERE movie_id = #{movieId}
     </select>
