@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/movie_detail.dart';
+import 'package:flutter_app/screens/movie_detail2.dart';
 import '../models/movie.dart';
 import '../service/movie_service.dart';
 
@@ -166,7 +167,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => MovieDetailScreen(movieId: movie.id),
+            builder: (_) => MovieDetailScreen2(movieId: movie.id),
           ),
         );
       },

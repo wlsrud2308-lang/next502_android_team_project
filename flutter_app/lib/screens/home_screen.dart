@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/screens/edit_screen.dart';
 import 'package:flutter_app/screens/movie_info.dart';
 
 class MovieHomeScreen extends StatefulWidget {
@@ -33,7 +34,13 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.person_outline, color: Colors.white30),
-            onPressed: () {},
+            onPressed: () {
+              // 버튼 누르면 EditProfilePage로 이동
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EditProfilePage()),
+              );
+            },
           ),
         ],
       ),
