@@ -185,23 +185,46 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 2),
-                        child: Icon(Icons.movie_outlined, size: 14, color: Colors.black12),
-                      ),
-                      const SizedBox(width: 6),
                       Expanded(
                         child: RichText(
                           text: TextSpan(
                             children: [
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0F0F0),
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                  child: Text(
+                                    post.category ?? "일반",
+                                    style: const TextStyle(
+                                        color: Colors.black54,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                ),
+                              ),
                               TextSpan(
                                 text: post.title,
-                                style: const TextStyle(color: Color(0xFF333333), fontSize: 14, height: 1.3),
+                                style: const TextStyle(
+                                    color: Color(0xFF333333),
+                                    fontSize: 14,
+                                    height: 1.3,
+                                    fontWeight: FontWeight.w500
+                                ),
                               ),
                               if (post.commentCnt > 0)
                                 TextSpan(
                                   text: "  ${post.commentCnt}",
-                                  style: const TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      color: Colors.blueAccent,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold
+                                  ),
                                 ),
                             ],
                           ),
@@ -212,7 +235,6 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const SizedBox(width: 20),
                       Text(post.authorName, style: const TextStyle(color: Colors.black45, fontSize: 11)),
                       const SizedBox(width: 8),
                       const Text("·", style: TextStyle(color: Colors.black12)),

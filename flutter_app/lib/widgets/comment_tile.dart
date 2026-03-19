@@ -31,11 +31,11 @@ class CommentTile extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
       decoration: BoxDecoration(
-        color: isReply ? Colors.white.withOpacity(0.02) : Colors.transparent,
+        color: isReply ? const Color(0xFFF9F9F9) : Colors.white,
         border: const Border(
-          bottom: BorderSide(color: Colors.white10, width: 0.5),
+          bottom: BorderSide(color: Color(0xFFEEEEEE), width: 0.5),
         ),
       ),
       child: Row(
@@ -43,8 +43,8 @@ class CommentTile extends StatelessWidget {
         children: [
           if (isReply)
             const Padding(
-              padding: EdgeInsets.only(right: 8.0, top: 2.0),
-              child: Icon(Icons.subdirectory_arrow_right, size: 16, color: Colors.white24),
+              padding: EdgeInsets.only(right: 10.0, top: 2.0),
+              child: Icon(Icons.subdirectory_arrow_right, size: 16, color: Colors.black12),
             ),
 
           Expanded(
@@ -58,37 +58,25 @@ class CommentTile extends StatelessWidget {
                       children: [
                         Text(
                           comment.nickname,
-                          style: TextStyle(
-                            color: isReply ? Colors.white70 : Colors.white,
+                          style: const TextStyle(
+                            color: Color(0xFF333333),
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 13,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           formatTime(comment.createdAt),
-                          style: const TextStyle(color: Colors.white38, fontSize: 11),
+                          style: const TextStyle(color: Colors.black26, fontSize: 11),
                         ),
                       ],
                     ),
                     Row(
                       children: [
                         if (onEdit != null)
-                          GestureDetector(
-                            onTap: () => _showEditDialog(context),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 6),
-                              child: Icon(Icons.edit_outlined, size: 16, color: Colors.white38),
-                            ),
-                          ),
+                          _actionIcon(Icons.edit_outlined, () => _showEditDialog(context)),
                         if (onDelete != null)
-                          GestureDetector(
-                            onTap: onDelete,
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 6),
-                              child: Icon(Icons.delete_outline, size: 16, color: Colors.white38),
-                            ),
-                          ),
+                          _actionIcon(Icons.delete_outline, onDelete!),
                       ],
                     ),
                   ],
@@ -96,7 +84,7 @@ class CommentTile extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   comment.content,
-                  style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
+                  style: const TextStyle(color: Color(0xFF444444), fontSize: 14, height: 1.5),
                 ),
                 const SizedBox(height: 8),
 
@@ -108,7 +96,7 @@ class CommentTile extends StatelessWidget {
                       child: const Text(
                         "답글 달기",
                         style: TextStyle(
-                          color: Color(0xFF9D50BB),
+                          color: Colors.blueAccent,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -123,29 +111,40 @@ class CommentTile extends StatelessWidget {
     );
   }
 
+  Widget _actionIcon(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Icon(icon, size: 16, color: Colors.black26),
+      ),
+    );
+  }
+
   void _showEditDialog(BuildContext context) {
     final controller = TextEditingController(text: comment.content);
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: const Text("댓글 수정", style: TextStyle(color: Colors.white, fontSize: 16)),
+          title: const Text("댓글 수정", style: TextStyle(color: Color(0xFF333333), fontSize: 16, fontWeight: FontWeight.bold)),
           content: TextField(
             controller: controller,
             autofocus: true,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Color(0xFF333333)),
             decoration: const InputDecoration(
               hintText: "수정할 내용을 입력하세요",
-              hintStyle: TextStyle(color: Colors.white24),
-              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF9D50BB))),
+              hintStyle: TextStyle(color: Colors.black26),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("취소", style: TextStyle(color: Colors.white54)),
+              child: const Text("취소", style: TextStyle(color: Colors.black38)),
             ),
             TextButton(
               onPressed: () {
@@ -154,7 +153,7 @@ class CommentTile extends StatelessWidget {
                   onEdit!(controller.text.trim());
                 }
               },
-              child: const Text("수정", style: TextStyle(color: Color(0xFF9D50BB), fontWeight: FontWeight.bold)),
+              child: const Text("수정", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
             ),
           ],
         );
