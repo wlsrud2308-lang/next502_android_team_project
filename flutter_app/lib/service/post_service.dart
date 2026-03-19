@@ -46,13 +46,8 @@ abstract class PostService {
   // 10. 댓글 삭제
   Future<bool> deleteComment(int commentId, int userNum);
 
-<<<<<<< HEAD
   // 11. 게시글 검색 (검색어로 게시글을 필터링)
   Future<List<PostDto>> searchPosts(String query);  // 새로운 메서드 추가
 
   Future<List<PostDto>> getPopularPosts();
-=======
-  // 11. 게시글 검색
-  Future<List<PostDto>> searchPosts(String query);
->>>>>>> 5f6020f370ae440d606a8d3bae252697cab21a54
 }
