@@ -1,5 +1,7 @@
 class PostDto {
   final int postId;
+  final String? boardType;
+  final String? category;
   final String title;
   final String content;
   final String authorName;
@@ -11,6 +13,8 @@ class PostDto {
 
   PostDto({
     required this.postId,
+    this.boardType,
+    this.category,
     required this.title,
     required this.content,
     required this.authorName,
@@ -24,6 +28,8 @@ class PostDto {
   factory PostDto.fromJson(Map<String, dynamic> json) {
     return PostDto(
       postId: json['postId'] ?? 0,
+      boardType: json['boardType'],
+      category: json['category'],
       title: json['title'] ?? '',
       content: json['content'] ?? '',
       authorName: json['authorName'] ?? '익명',
@@ -38,6 +44,8 @@ class PostDto {
   Map<String, dynamic> toJson() {
     return {
       'postId': postId,
+      'boardType': boardType,
+      'category': category,
       'title': title,
       'content': content,
       'authorName': authorName,
@@ -52,9 +60,13 @@ class PostDto {
   PostDto copyWith({
     String? title,
     String? content,
+    String? boardType,
+    String? category,
   }) {
     return PostDto(
       postId: this.postId,
+      boardType: boardType ?? this.boardType,
+      category: category ?? this.category,
       title: title ?? this.title,
       content: content ?? this.content,
       authorName: this.authorName,

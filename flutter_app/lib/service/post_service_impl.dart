@@ -12,6 +12,30 @@ class PostServiceImpl implements PostService {
     "Accept": "application/json",
   };
 
+  // 1. 게시판별 목록 조회 (추가된 기능)
+  // boardType: '자유', '국내', '해외' 또는 null(전체)
+  @override
+  Future<List<PostDto>> getPostsByBoard(String? boardType) async {
+    try {
+      // 쿼리 파라미터 생성 (예: ?boardType=국내)
+      final uri = Uri.parse('$baseUrl/api/post').replace(
+        queryParameters: boardType != null ? {'boardType': boardType} : null,
+      );
+
+      final response = await http.get(uri, headers: {"Accept": "application/json"});
+
+      if (response.statusCode == 200) {
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((item) => PostDto.fromJson(item)).toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print("❌ [getPostsByBoard 에러]: $e");
+      return [];
+    }
+  }
+
   @override
   Future<PostDto> getPostDetail(int postId) async {
     try {
@@ -32,17 +56,18 @@ class PostServiceImpl implements PostService {
     }
   }
 
+  // 2. 게시글 등록 (boardType, category 파라미터 대응)
   @override
-  Future<bool> insertPost(String title, String content, int userNum) async {
+  Future<bool> insertPost(String title, String content, int userNum, {String? boardType, String? category}) async {
     try {
       final body = jsonEncode({
+        "boardType": boardType ?? "자유", // 기본값 설정
+        "category": category ?? "잡담",   // 기본값 설정
         "title": title,
         "content": content,
         "userNum": userNum,
-        "viewCnt": 0,
-        "likeCnt": 0,
-        "commentCnt": 0,
       });
+
       print("📤 [게시글 등록 요청] Body: $body");
 
       final response = await http.post(
@@ -51,6 +76,7 @@ class PostServiceImpl implements PostService {
         body: body,
       );
 
+      // 서버가 201 Created 또는 200 OK를 반환하는지 확인
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       print("❌ [게시글 등록 에러]: $e");
@@ -62,19 +88,17 @@ class PostServiceImpl implements PostService {
   Future<bool> updatePost(PostDto post) async {
     try {
       final body = jsonEncode(post.toJson());
-      print("📤 [게시글 수정 요청] 전체 데이터 전송: $body");
-
       final response = await http.put(
         Uri.parse('$baseUrl/api/post/update'),
         headers: _headers,
         body: body,
       );
 
-      print("📢 [게시글 수정 응답] 코드: ${response.statusCode}");
-      if (response.statusCode != 200) {
-        print("⚠️ [수정 실패 사유]: ${response.body}");
+      // 서버 Controller가 ResponseEntity<Boolean>을 주므로 응답 바디 확인
+      if (response.statusCode == 200) {
+        return response.body.trim().toLowerCase() == "true";
       }
-      return response.statusCode == 200;
+      return false;
     } catch (e) {
       print("❌ [게시글 수정 에러]: $e");
       return false;
@@ -88,7 +112,10 @@ class PostServiceImpl implements PostService {
         Uri.parse('$baseUrl/api/post/$postId?userNum=$userNum'),
         headers: {"Accept": "application/json"},
       );
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        return response.body.trim().toLowerCase() == "true";
+      }
+      return false;
     } catch (e) {
       print("❌ [게시글 삭제 에러]: $e");
       return false;
@@ -111,6 +138,8 @@ class PostServiceImpl implements PostService {
     }
   }
 
+  // --- 댓글 관련 로직 (기존 유지) ---
+
   @override
   Future<List<CommentDto>> getComments(int postId) async {
     try {
@@ -130,13 +159,7 @@ class PostServiceImpl implements PostService {
   }
 
   @override
-  Future<bool> insertComment(
-      String content,
-      int postId,
-      int userNum,
-      String targetType,
-          {int? targetId}
-      ) async {
+  Future<bool> insertComment(String content, int postId, int userNum, String targetType, {int? targetId}) async {
     try {
       final body = jsonEncode({
         'content': content,
@@ -146,13 +169,7 @@ class PostServiceImpl implements PostService {
         'targetId': targetId,
       });
 
-      print("📤 [댓글 등록 요청] Body: $body");
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/comments'),
-        headers: _headers,
-        body: body,
-      );
+      final response = await http.post(Uri.parse('$baseUrl/comments'), headers: _headers, body: body);
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       print("❌ [댓글 등록 에러]: $e");
@@ -163,16 +180,8 @@ class PostServiceImpl implements PostService {
   @override
   Future<bool> updateComment(int commentId, int userNum, String content) async {
     try {
-      final body = jsonEncode({
-        "commentId": commentId,
-        "userNum": userNum,
-        "content": content,
-      });
-      final response = await http.put(
-        Uri.parse('$baseUrl/comments'),
-        headers: _headers,
-        body: body,
-      );
+      final body = jsonEncode({"commentId": commentId, "userNum": userNum, "content": content});
+      final response = await http.put(Uri.parse('$baseUrl/comments'), headers: _headers, body: body);
       return response.statusCode == 200;
     } catch (e) {
       print("❌ [댓글 수정 에러]: $e");
@@ -183,16 +192,8 @@ class PostServiceImpl implements PostService {
   @override
   Future<bool> deleteComment(int commentId, int userNum) async {
     try {
-      final body = jsonEncode({
-        "commentId": commentId,
-        "userNum": userNum,
-      });
-
-      final response = await http.delete(
-        Uri.parse('$baseUrl/comments'),
-        headers: _headers,
-        body: body,
-      );
+      final body = jsonEncode({"commentId": commentId, "userNum": userNum});
+      final response = await http.delete(Uri.parse('$baseUrl/comments'), headers: _headers, body: body);
       return response.statusCode == 200;
     } catch (e) {
       print("❌ [댓글 삭제 에러]: $e");
