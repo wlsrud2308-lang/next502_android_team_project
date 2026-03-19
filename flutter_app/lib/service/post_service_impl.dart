@@ -200,4 +200,30 @@ class PostServiceImpl implements PostService {
       return false;
     }
   }
+
+  @override
+  Future<List<PostDto>> searchPosts(String query) async {
+    try {
+      if (query.isEmpty) {
+        return [];  // 검색어가 비어있으면 빈 리스트 반환
+      }
+
+      final uri = Uri.parse('$baseUrl/api/post/search').replace(
+        queryParameters: {'query': query},  // 검색어를 쿼리 파라미터로 전송
+      );
+
+      final response = await http.get(uri, headers: {"Accept": "application/json"});
+
+      if (response.statusCode == 200) {
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((item) => PostDto.fromJson(item)).toList();
+      } else {
+        print("❌ [searchPosts 에러]: 서버에서 검색 결과를 받지 못했습니다.");
+        return [];
+      }
+    } catch (e) {
+      print("❌ [searchPosts 에러]: $e");
+      return [];
+    }
+  }
 }

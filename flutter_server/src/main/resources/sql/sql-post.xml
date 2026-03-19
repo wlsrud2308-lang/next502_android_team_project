@@ -79,4 +79,30 @@
         WHERE post_id = #{postId} AND user_num = #{userNum}
     </delete>
 
+    <!-- 게시글 검색 쿼리 추가 -->
+    <select id="searchPosts" resultType="bitc.next502.flutter_server.dto.PostDTO">
+        SELECT
+        p.post_id AS postId,
+        p.board_type AS boardType,
+        p.category,
+        p.title,
+        p.content,
+        p.user_num AS userNum,
+        u.nickname AS authorName,
+        p.view_cnt AS viewCnt,
+        p.like_cnt AS likeCnt,
+        p.created_at AS createdAt,
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.post_id) AS commentCnt
+        FROM post p
+        JOIN users u ON p.user_num = u.user_num
+        <where>
+            <if test="query != null and query != ''">
+                AND (p.title LIKE CONCAT('%', #{query}, '%')
+                OR p.content LIKE CONCAT('%', #{query}, '%')
+                OR p.category LIKE CONCAT('%', #{query}, '%'))
+            </if>
+        </where>
+        ORDER BY p.created_at DESC
+    </select>
+
 </mapper>

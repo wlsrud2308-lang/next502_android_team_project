@@ -32,4 +32,7 @@ public interface PostMapper {
     int checkLikeHistory(@Param("postId") Long postId, @Param("userNum") int userNum);
     void insertLikeHistory(@Param("postId") Long postId, @Param("userNum") int userNum);
     void incrementLikeCount(Long postId);
+
+    // 8. 게시글 검색 기능 추가
+    List<PostDTO> searchPosts(@Param("query") String query);
 }
