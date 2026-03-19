@@ -83,4 +83,9 @@ public class PostServiceImpl implements PostService {
         return postMapper.searchPosts(query);  // MyBatis의 searchPosts 쿼리 호출
     }
 
+    @Override
+    public List<PostDTO> getPopularPosts() {
+        return postMapper.getPopularPosts();  // Mapper에서 인기글 쿼리 실행
+    }
+
 }
