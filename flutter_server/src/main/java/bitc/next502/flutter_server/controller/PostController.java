@@ -71,4 +71,11 @@ public class PostController {
         boolean result = postService.pushLike(postId, userNum);
         return ResponseEntity.ok(result);
     }
+
+    // 7. 게시글 검색 기능 추가
+    @GetMapping("/search")
+    public ResponseEntity<List<PostDTO>> searchPosts(@RequestParam("query") String query) {
+        List<PostDTO> posts = postService.searchPosts(query);
+        return ResponseEntity.ok(posts);
+    }
 }

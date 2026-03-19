@@ -21,4 +21,7 @@ public interface PostService {
 
     // 6. 좋아요 기능
     boolean pushLike(Long postId, int userNum);
+
+    // 7. 게시글 검색
+    List<PostDTO> searchPosts(String query);  // 검색 메서드 추가
 }

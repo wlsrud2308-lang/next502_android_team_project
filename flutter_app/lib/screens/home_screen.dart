@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/edit_screen.dart';
 import 'package:flutter_app/screens/movie_info.dart';
+import 'package:flutter_app/screens/search_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
-import 'package:flutter_app/models/post_model.dart';  // 게시글 모델
+import 'package:flutter_app/models/post_model.dart';
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -13,7 +14,8 @@ class MovieHomeScreen extends StatefulWidget {
 }
 
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
-  int _selectedCategoryIndex = 3;  // 기본적으로 자유게시판을 첫 번째로 선택
+  int _selectedCategoryIndex = 3;
+
   final List<String> _categories = [
     "영화 정보",
     "해외영화",
@@ -21,42 +23,45 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     "자유게시판"
   ];
 
-  late Future<List<PostDto>> _posts;  // 게시글 목록을 담을 Future
+  late Future<List<PostDto>> _posts;
 
-  final PostService _postService = PostServiceImpl();  // 서비스 객체
+  final PostService _postService = PostServiceImpl();
 
   @override
   void initState() {
     super.initState();
-    _posts = fetchPosts("자유");  // 기본적으로 자유 게시판 데이터를 "자유"로 불러옴
+    _posts = fetchPosts("자유");
   }
 
-  // 게시판 카테고리 변경 시 데이터 가져오기
   Future<List<PostDto>> fetchPosts(String boardType) async {
     try {
       var posts = await _postService.getPostsByBoard(boardType);
+      if (posts.isEmpty) {
+        throw '게시글이 없습니다';
+      }
       return posts;
     } catch (e) {
-      return [];  // 오류 발생 시 빈 리스트 반환
+      return [];
     }
   }
 
-  // 탭을 변경할 때마다 새로운 데이터를 가져오기
   void _changeCategory(int index) {
     setState(() {
       _selectedCategoryIndex = index;
-      // 영화 정보 탭 클릭 시 MovieListScreen으로 이동
+
       if (index == 0) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const MovieListScreen(), // 영화 정보 화면
+            builder: (context) => const MovieListScreen(),
           ),
         );
       } else {
-        // '자유게시판'을 '자유'로 변경
-        String boardType = _categories[index] == '자유게시판' ? '자유' : _categories[index].replaceAll('영화', '');
-        _posts = fetchPosts(boardType);  // 새로운 Future 객체 할당
+        String boardType = _categories[index] == '자유게시판'
+            ? '자유'
+            : _categories[index].replaceAll('영화', '');
+
+        _posts = fetchPosts(boardType);
       }
     });
   }
@@ -70,17 +75,27 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         leading: const Icon(Icons.movie_filter, color: Colors.purpleAccent),
         title: const Text("영화 앱"),
         actions: [
+          // 🔍 검색 버튼 → 바로 검색 페이지 이동
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white30),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(),
+                ),
+              );
+            },
           ),
+
           IconButton(
             icon: const Icon(Icons.person_outline, color: Colors.white30),
             onPressed: () {
-              // 버튼 누르면 EditProfilePage로 이동
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const EditProfilePage()),
+                MaterialPageRoute(
+                  builder: (context) => const EditProfilePage(),
+                ),
               );
             },
           ),
@@ -91,7 +106,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           _buildBoxOfficeBar(),
           _buildBarCategoryNav(),
           Expanded(
-            child: _buildSelectedCategoryContent(),  // 선택된 카테고리의 게시글 내용 표시
+            child: _buildSelectedCategoryContent(),
           ),
         ],
       ),
@@ -157,11 +172,12 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         itemCount: _categories.length,
         itemBuilder: (context, index) {
           bool isSelected = _selectedCategoryIndex == index;
+
           return Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                _changeCategory(index);  // 탭을 변경할 때 데이터를 갱신
+                _changeCategory(index);
               },
               child: Container(
                 alignment: Alignment.center,
@@ -193,11 +209,11 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  // ====================== 선택된 카테고리 콘텐츠 (게시글 목록)
+  // ====================== 게시글 리스트
   Widget _buildSelectedCategoryContent() {
     return FutureBuilder<List<PostDto>>(
-      key: ValueKey<String>(_categories[_selectedCategoryIndex]),  // key를 사용하여 새로운 Future로 강제 갱신
-      future: _posts,  // _posts는 현재 선택된 카테고리에 해당하는 게시글 리스트
+      key: ValueKey<String>(_categories[_selectedCategoryIndex]),
+      future: _posts,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -210,6 +226,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               var post = snapshot.data![index];
+
               return _buildPostItem(
                 context,
                 post.postId.toString(),
@@ -240,29 +257,36 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border(
-            bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+          bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 35,
-            child: Text(rank,
-                style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orangeAccent)),
+            child: Text(
+              rank,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.orangeAccent,
+              ),
+            ),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                    maxLines: 2),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  maxLines: 2,
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -283,8 +307,10 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          Text("💬 $comments",
-              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(
+            "💬 $comments",
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
         ],
       ),
     );

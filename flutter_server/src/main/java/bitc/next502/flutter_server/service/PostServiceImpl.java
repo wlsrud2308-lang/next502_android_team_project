@@ -75,4 +75,12 @@ public class PostServiceImpl implements PostService {
         postMapper.incrementLikeCount(postId);
         return true;
     }
+
+    // 7. 게시글 검색 기능 추가
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostDTO> searchPosts(String query) {
+        return postMapper.searchPosts(query);  // MyBatis의 searchPosts 쿼리 호출
+    }
+
 }
