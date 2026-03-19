@@ -4,11 +4,13 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ReviewInput extends StatefulWidget {
+  final int userNum;
   final int movieId;
   final VoidCallback onReviewSubmitted;
 
   const ReviewInput({
     super.key,
+    required this.userNum,
     required this.movieId,
     required this.onReviewSubmitted,
   });
@@ -57,6 +59,7 @@ class _ReviewInputState extends State<ReviewInput> {
       final res = await _dio.post(
         "/reviews",
         data: {
+          "user_num": widget.userNum,
           "movieId": widget.movieId,
           "rating": _rating,
           "content": _contentController.text.trim(),
