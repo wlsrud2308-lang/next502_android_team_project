@@ -18,7 +18,7 @@ public class MoviesServiceImpl implements MoviesService {
 
   private final MoviesMapper moviesMapper;
   private final RestTemplate restTemplate = new RestTemplate();
-  private final String tmdbApiKey = "YOUR_TMDB_API_KEY";
+  private final String tmdbApiKey = "70572fb9818902f499a53a287d6055b6";
 
   @Override
   public List<MoviesDTO> getMovies() {
