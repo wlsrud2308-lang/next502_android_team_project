@@ -51,24 +51,68 @@
 
     <!-- 전체 영화 조회 -->
     <select id="getAllMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT *
+        SELECT id,
+        title,
+        original_title,
+        overview,
+        poster_path,
+        backdrop_path,
+        release_date,
+        vote_average,
+        vote_count,
+        popularity,
+        original_language,
+        runtime
         FROM movies
     </select>
 
     <select id="getNowPlayingMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT * FROM movies
+        SELECT id,
+        title,
+        original_title,
+        overview,
+        poster_path,
+        backdrop_path,
+        release_date,
+        vote_average,
+        vote_count,
+        popularity,
+        original_language,
+        runtime FROM movies
         WHERE release_date >= CURDATE() - INTERVAL 30 DAY
         ORDER BY release_date DESC;
     </select>
 
     <select id="getPopularMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT * FROM movies
+        SELECT id,
+        title,
+        original_title,
+        overview,
+        poster_path,
+        backdrop_path,
+        release_date,
+        vote_average,
+        vote_count,
+        popularity,
+        original_language,
+        runtime FROM movies
         ORDER BY popularity DESC
             LIMIT 20;
     </select>
 
     <select id="getTopRatedMovies" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
-        SELECT * FROM movies
+        SELECT id,
+        title,
+        original_title,
+        overview,
+        poster_path,
+        backdrop_path,
+        release_date,
+        vote_average,
+        vote_count,
+        popularity,
+        original_language,
+        runtime FROM movies
         ORDER BY vote_average DESC
             LIMIT 20;
     </select>

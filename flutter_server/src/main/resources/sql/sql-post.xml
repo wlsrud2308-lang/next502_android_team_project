@@ -6,9 +6,10 @@
     <select id="getPostDetail" resultType="bitc.next502.flutter_server.dto.PostDTO">
         SELECT
             p.post_id AS postId,
-            p.title,
+            p.board_type AS boardType,  p.category,                 p.title,
             p.content,
-            p.user_num AS userNum,  u.nickname AS authorName,
+            p.user_num AS userNum,
+            u.nickname AS authorName,
             p.view_cnt AS viewCnt,
             p.like_cnt AS likeCnt,
             p.created_at AS createdAt,
@@ -17,6 +18,41 @@
                  JOIN users u ON p.user_num = u.user_num
         WHERE p.post_id = #{postId}
     </select>
+
+    <select id="getPostsByBoard" resultType="bitc.next502.flutter_server.dto.PostDTO">
+        SELECT
+        p.post_id AS postId,
+        p.board_type AS boardType,
+        p.category,
+        p.title,
+        p.user_num AS userNum,
+        u.nickname AS authorName,
+        p.view_cnt AS viewCnt,
+        p.like_cnt AS likeCnt,
+        p.created_at AS createdAt,
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.post_id) AS commentCnt
+        FROM post p
+        JOIN users u ON p.user_num = u.user_num
+        <where>
+            <if test="boardType != null and boardType != ''">
+                AND p.board_type = #{boardType}
+            </if>
+        </where>
+        ORDER BY p.created_at DESC
+    </select>
+
+    <insert id="insertPost" parameterType="bitc.next502.flutter_server.dto.PostDTO">
+        INSERT INTO post (board_type, category, title, content, user_num, created_at)
+        VALUES (#{boardType}, #{category}, #{title}, #{content}, #{userNum}, NOW())
+    </insert>
+
+    <update id="updatePost">
+        UPDATE post
+        SET
+            title = #{title},
+            content = #{content},
+            category = #{category}  WHERE post_id = #{postId} AND user_num = #{userNum}
+    </update>
 
     <select id="checkLikeHistory" resultType="int">
         SELECT COUNT(*) FROM post_like_history
@@ -42,12 +78,5 @@
         DELETE FROM post
         WHERE post_id = #{postId} AND user_num = #{userNum}
     </delete>
-
-    <update id="updatePost">
-        UPDATE post
-        SET title = #{title}, content = #{content}
-        WHERE post_id = #{postId} AND user_num = #{userNum}
-    </update>
-
 
 </mapper>
