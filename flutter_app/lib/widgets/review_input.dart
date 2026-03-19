@@ -4,7 +4,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class ReviewInput extends StatefulWidget {
   final int movieId;
-  final VoidCallback onReviewSubmitted; // 제출 후 리뷰 새로고침
+  final VoidCallback onReviewSubmitted; // 제출 후 부모에게 새로고침 신호
 
   const ReviewInput({super.key, required this.movieId, required this.onReviewSubmitted});
 
@@ -14,16 +14,16 @@ class ReviewInput extends StatefulWidget {
 
 class _ReviewInputState extends State<ReviewInput> {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://10.0.2.2:8080',
+    baseUrl: 'http://10.0.2.2:8080', // 서버 URL
     connectTimeout: const Duration(seconds: 30),
     receiveTimeout: const Duration(seconds: 30),
   ));
 
   final TextEditingController _contentController = TextEditingController();
-  double _rating = 0;
+  double _rating = 0; // 현재 선택된 평점
+  bool _isSubmitting = false; // 제출 중 상태
 
-  bool _isSubmitting = false;
-
+  // 🔹 리뷰 제출
   void _submitReview() async {
     if (_contentController.text.isEmpty || _rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -37,23 +37,25 @@ class _ReviewInputState extends State<ReviewInput> {
     });
 
     try {
+      // 서버로 POST 요청
       await _dio.post("/reviews", data: {
         "movie_id": widget.movieId,
         "ratting": _rating,
         "content": _contentController.text,
-        "user_num": 1, // 테스트용, 실제 로그인 정보로 변경
+        "user_num": 1, // TODO: 로그인된 유저의 user_num으로 변경 필요
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("리뷰가 등록되었습니다!")),
       );
 
+      // 입력 초기화
       _contentController.clear();
       setState(() {
         _rating = 0;
       });
 
-      widget.onReviewSubmitted(); // 부모에게 새로고침 신호
+      widget.onReviewSubmitted(); // 부모에게 새로고침 요청
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("리뷰 등록 실패")),
@@ -78,7 +80,8 @@ class _ReviewInputState extends State<ReviewInput> {
             style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          // 평점 선택
+
+          // ⭐ 평점 선택 (0.5 단위)
           RatingBar(
             initialRating: _rating,
             minRating: 0.5,
@@ -97,7 +100,10 @@ class _ReviewInputState extends State<ReviewInput> {
               });
             },
           ),
-          // 내용 입력
+
+          const SizedBox(height: 8),
+
+          // 📝 리뷰 내용 입력
           TextField(
             controller: _contentController,
             maxLines: 3,
@@ -110,7 +116,10 @@ class _ReviewInputState extends State<ReviewInput> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
+
           const SizedBox(height: 8),
+
+          // 제출 버튼
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
