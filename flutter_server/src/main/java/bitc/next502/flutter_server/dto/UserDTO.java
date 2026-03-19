@@ -5,9 +5,15 @@ import lombok.Data;
 @Data
 public class UserDTO {
   private int userNum;
-  private String uid;       // 파이어베이스 UID
+  private String uid;
   private String email;
   private String nickname;
+
+
+  private String userName;
+  private String userTel;
+  private String userBirth;
+
   private String createDate;
   private String lastLoginTime;
 }

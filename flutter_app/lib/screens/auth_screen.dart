@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_app/screens/movie_info.dart';
 
-import 'home_screen.dart'; // 홈 화면 이동을 위해 추가
+import 'home_screen.dart';
 
 // Toast 메시지
 void showToast(String msg) {
@@ -46,19 +46,32 @@ class _AuthScreen extends State<AuthScreen> {
   late String password;
   late String nickname;
 
+
+  late String userName;
+  late String userTel;
+  late String userBirth; // user_birth로 명칭 통일
+
   bool isInput = true;
   bool isSignIn = true;
 
   // MySQL 회원 저장
   Future<void> registerToMySql(
-      String uid, String email, String nickname) async {
+      String uid,
+      String email,
+      String nickname,
+      String userName,
+      String userTel,
+      String userBirth) async {
     try {
       Response res = await _dio.post(
         '/signup',
         data: {
           "uid": uid,
           "email": email,
-          "nickname": nickname
+          "nickname": nickname,
+          "userName": userName,
+          "userTel": userTel,
+          "userBirth": userBirth
         },
       );
       print("서버 응답 : ${res.data}");
@@ -92,7 +105,7 @@ class _AuthScreen extends State<AuthScreen> {
 
         showToast("로그인 성공!");
 
-        // 로그인 성공 시 결과 화면 대신 홈 화면으로 강제 이동
+        // 로그인 성공 시 홈 화면으로 강제 이동
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const MovieHomeScreen()),
@@ -122,11 +135,18 @@ class _AuthScreen extends State<AuthScreen> {
           .createUserWithEmailAndPassword(email: email, password: password);
 
       if (user.user != null) {
-        // 이메일 인증
+        // 이메일 인증 메일 발송
         await user.user!.sendEmailVerification();
 
-        // MySQL 저장
-        await registerToMySql(user.user!.uid, email, nickname);
+
+        await registerToMySql(
+            user.user!.uid,
+            email,
+            nickname,
+            userName,
+            userTel,
+            userBirth
+        );
 
         if (!mounted) return;
         setState(() {
@@ -171,12 +191,38 @@ class _AuthScreen extends State<AuthScreen> {
               validator: (v) => v!.isEmpty ? "비밀번호 입력" : null,
               onSaved: (v) => password = v!,
             ),
-            if (!isSignIn)
+
+            // 회원가입일 때만 보이는 추가 필드들
+            if (!isSignIn) ...[
               TextFormField(
                 decoration: const InputDecoration(labelText: "닉네임"),
                 validator: (v) => v!.isEmpty ? "닉네임 입력" : null,
                 onSaved: (v) => nickname = v!,
               ),
+              TextFormField(
+                decoration: const InputDecoration(labelText: "이름 (실명)"),
+                validator: (v) => v!.isEmpty ? "이름 입력" : null,
+                onSaved: (v) => userName = v!,
+              ),
+              TextFormField(
+                decoration: const InputDecoration(
+                    labelText: "전화번호",
+                    hintText: "예: 010-1234-5678"
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (v) => v!.isEmpty ? "전화번호 입력" : null,
+                onSaved: (v) => userTel = v!,
+              ),
+              TextFormField(
+                decoration: const InputDecoration(
+                    labelText: "생년월일",
+                    hintText: "예: 1995-05-20"
+                ),
+                keyboardType: TextInputType.datetime,
+                validator: (v) => v!.isEmpty ? "생년월일 입력" : null,
+                onSaved: (v) => userBirth = v!,
+              ),
+            ],
           ],
         ),
       ),

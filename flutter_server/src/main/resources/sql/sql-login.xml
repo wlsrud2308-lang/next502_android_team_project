@@ -6,8 +6,9 @@
             parameterType="bitc.next502.flutter_server.dto.UserDTO"
             useGeneratedKeys="true"
             keyProperty="userNum">
-        INSERT INTO users (uid, email, nickname, create_date)
-        VALUES (#{uid}, #{email}, #{nickname}, NOW())
-    </insert>
 
+        INSERT INTO users (uid, email, nickname, user_name, user_tel, user_birth, create_date)
+        VALUES (#{uid}, #{email}, #{nickname}, #{userName}, #{userTel}, #{userBirth}, NOW())
+
+    </insert>
 </mapper>
