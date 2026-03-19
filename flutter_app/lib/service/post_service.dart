@@ -2,14 +2,16 @@ import '../models/post_model.dart';
 import '../models/comment_model.dart';
 
 abstract class PostService {
-  // 1. 게시판별 목록 조회 (💡 새로 추가)
-  // boardType: '자유', '국내', '해외' 또는 null(전체)
+
+  Future<int> getUserNumByUid(String uid);
+
+  // 1. 게시판별 목록 조회
   Future<List<PostDto>> getPostsByBoard(String? boardType);
 
   // 2. 상세 조회
   Future<PostDto> getPostDetail(int postId);
 
-  // 3. 게시글 작성 (💡 파라미터에 boardType, category 추가)
+  // 3. 게시글 작성
   Future<bool> insertPost(
       String title,
       String content,
@@ -23,10 +25,10 @@ abstract class PostService {
   // 5. 게시글 삭제
   Future<bool> deletePost(int postId, int userNum);
 
-  // 6. 좋아요
+  // 6. 좋아요(추천)
   Future<bool> pushLike(int postId, int userNum);
 
-  // 7. 댓글 목록
+  // 7. 댓글 목록 조회
   Future<List<CommentDto>> getComments(int postId);
 
   // 8. 댓글 및 대댓글 등록
@@ -44,8 +46,13 @@ abstract class PostService {
   // 10. 댓글 삭제
   Future<bool> deleteComment(int commentId, int userNum);
 
+<<<<<<< HEAD
   // 11. 게시글 검색 (검색어로 게시글을 필터링)
   Future<List<PostDto>> searchPosts(String query);  // 새로운 메서드 추가
 
   Future<List<PostDto>> getPopularPosts();
+=======
+  // 11. 게시글 검색
+  Future<List<PostDto>> searchPosts(String query);
+>>>>>>> 5f6020f370ae440d606a8d3bae252697cab21a54
 }
