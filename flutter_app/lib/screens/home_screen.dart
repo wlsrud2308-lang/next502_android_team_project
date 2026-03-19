@@ -7,6 +7,7 @@ import 'package:flutter_app/screens/search_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/models/post_model.dart';
+import 'package:flutter_app/widgets/popular_posts_widget.dart'; // 인기글 위젯 import
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -16,26 +17,25 @@ class MovieHomeScreen extends StatefulWidget {
 }
 
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
-  int _selectedCategoryIndex = 0; // 초기 선택값 자유게시판
-
+  int _selectedCategoryIndex = 0; // 초기 선택값 인기글
   final List<String> _categories = [
-    "인기글", // ✅ 인기글 추가
+    "인기글",
     "영화 정보",
     "해외영화",
     "국내영화",
     "자유게시판",
-
   ];
 
   late Future<List<PostDto>> _posts;
-
   final PostService _postService = PostServiceImpl();
 
   @override
   void initState() {
     super.initState();
+    _loadPosts();
+  }
 
-    // 초기 탭이 인기글(0번)이면 fetchPopularPosts(), 아니면 fetchPosts(boardType)
+  void _loadPosts() {
     if (_selectedCategoryIndex == 0) {
       _posts = fetchPopularPosts();
     } else {
@@ -46,26 +46,20 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     }
   }
 
-  // 게시글 가져오기
   Future<List<PostDto>> fetchPosts(String boardType) async {
     try {
       var posts = await _postService.getPostsByBoard(boardType);
-      if (posts.isEmpty) {
-        throw '게시글이 없습니다';
-      }
+      if (posts.isEmpty) throw '게시글이 없습니다';
       return posts;
     } catch (e) {
       return [];
     }
   }
 
-  // 인기글 가져오기
   Future<List<PostDto>> fetchPopularPosts() async {
     try {
       var posts = await _postService.getPopularPosts();
-      if (posts.isEmpty) {
-        throw '게시글이 없습니다';
-      }
+      if (posts.isEmpty) throw '게시글이 없습니다';
       return posts;
     } catch (e) {
       return [];
@@ -85,10 +79,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           ),
         );
       } else if (_categories[index] == "인기글") {
-        // 인기글
         _posts = fetchPopularPosts();
       } else {
-        // 자유게시판, 해외, 국내
         String boardType = _categories[index] == '자유게시판'
             ? '자유'
             : _categories[index].replaceAll('영화', '');
@@ -144,9 +136,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         children: [
           _buildBoxOfficeBar(),
           _buildBarCategoryNav(),
-          Expanded(
-            child: _buildSelectedCategoryContent(),
-          ),
+          Expanded(child: _buildSelectedCategoryContent()),
         ],
       ),
     );
@@ -211,24 +201,20 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         itemCount: _categories.length,
         itemBuilder: (context, index) {
           bool isSelected = _selectedCategoryIndex == index;
-
           return Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {
-                _changeCategory(index);
-              },
+              onTap: () => _changeCategory(index),
               child: Container(
                 alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: isSelected
-                          ? Colors.purpleAccent
-                          : Colors.transparent,
-                      width: 3,
-                    ),
+                        color: isSelected
+                            ? Colors.purpleAccent
+                            : Colors.transparent,
+                        width: 3),
                   ),
                 ),
                 child: Text(
@@ -248,8 +234,19 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  // ====================== 게시글 리스트
+  // ====================== 선택된 카테고리 콘텐츠
   Widget _buildSelectedCategoryContent() {
+    if (_selectedCategoryIndex == 0) {
+      // 인기글 탭 → PopularPostsWidget으로 분리
+      return const PopularPostsWidget();
+    } else {
+      // 자유/해외/국내 게시글
+      return _buildPostList();
+    }
+  }
+
+  // ====================== 일반 게시글 리스트 (자유/해외/국내)
+  Widget _buildPostList() {
     return FutureBuilder<List<PostDto>>(
       key: ValueKey<String>(_categories[_selectedCategoryIndex]),
       future: _posts,
@@ -257,29 +254,16 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
               child: CircularProgressIndicator(color: Colors.purpleAccent));
-        } else if (snapshot.hasError) {
-          return const Center(
-              child:
-              Text('게시글 로드 실패', style: TextStyle(color: Colors.white54)));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(
-              child:
-              Text('게시글이 없습니다.', style: TextStyle(color: Colors.white54)));
+              child: Text('게시글이 없습니다.',
+                  style: TextStyle(color: Colors.white54)));
         } else {
           return ListView.builder(
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               var post = snapshot.data![index];
-
-              return _buildPostItem(
-                context,
-                post.postId.toString(),
-                post.title,
-                post.category ?? '기타',
-                post.authorName,
-                post.createdAt,
-                post.commentCnt,
-              );
+              return _buildPostItem(post);
             },
           );
         }
@@ -287,22 +271,12 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  // ====================== 게시글 아이템
-  Widget _buildPostItem(
-      BuildContext context,
-      String rank,
-      String title,
-      String category,
-      String author,
-      String time,
-      int comments,
-      ) {
+  Widget _buildPostItem(PostDto post) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
-        ),
+            bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,51 +284,45 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           SizedBox(
             width: 35,
             child: Text(
-              rank,
+              post.postId.toString(),
               style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.orangeAccent,
-              ),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orangeAccent),
             ),
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  maxLines: 2,
-                ),
+                Text(post.title,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                    maxLines: 2),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Text(category,
+                    Text(post.category ?? '기타',
                         style: const TextStyle(
                             color: Colors.lightBlueAccent, fontSize: 11)),
                     const SizedBox(width: 10),
-                    Text(author,
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 11)),
+                    Text(post.authorName,
+                        style:
+                        const TextStyle(color: Colors.white70, fontSize: 11)),
                     const SizedBox(width: 10),
-                    Text(time,
-                        style: const TextStyle(
-                            color: Colors.white54, fontSize: 11)),
+                    Text(post.createdAt,
+                        style:
+                        const TextStyle(color: Colors.white54, fontSize: 11)),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            "💬 $comments",
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
+          Text("💬 ${post.commentCnt}",
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
         ],
       ),
     );
