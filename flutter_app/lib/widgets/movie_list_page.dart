@@ -15,7 +15,7 @@ class _MovieListPageState extends State<MovieListPage> {
   @override
   void initState() {
     super.initState();
-    movies = MovieService.fetchMovies();
+    movies = MovieService.fetchAllMovies();
   }
 
   @override
