@@ -1,31 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ReviewInput extends StatefulWidget {
   final int movieId;
-  final VoidCallback onReviewSubmitted; // 제출 후 부모에게 새로고침 신호
+  final VoidCallback onReviewSubmitted;
 
-  const ReviewInput({super.key, required this.movieId, required this.onReviewSubmitted});
+  const ReviewInput({
+    super.key,
+    required this.movieId,
+    required this.onReviewSubmitted,
+  });
 
   @override
   State<ReviewInput> createState() => _ReviewInputState();
 }
 
 class _ReviewInputState extends State<ReviewInput> {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://10.0.2.2:8080', // 서버 URL
-    connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(seconds: 30),
-  ));
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: 'http://10.0.2.2:8080',
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+    ),
+  );
 
   final TextEditingController _contentController = TextEditingController();
-  double _rating = 0; // 현재 선택된 평점
-  bool _isSubmitting = false; // 제출 중 상태
+  double _rating = 0;
+  bool _isSubmitting = false;
 
-  // 🔹 리뷰 제출
-  void _submitReview() async {
-    if (_contentController.text.isEmpty || _rating == 0) {
+  Future<void> _submitReview() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("로그인이 필요합니다")),
+      );
+      return;
+    }
+
+    if (_contentController.text.trim().isEmpty || _rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("평점과 내용을 모두 입력해주세요")),
       );
@@ -37,35 +52,53 @@ class _ReviewInputState extends State<ReviewInput> {
     });
 
     try {
-      // 서버로 POST 요청
+      final userRes = await _dio.get("/users/uid/${currentUser.uid}");
+      final userData = Map<String, dynamic>.from(userRes.data);
+
+      final userNum = userData['userNum'] ?? userData['user_num'];
+
+      if (userNum == null) {
+        throw Exception("user_num 조회 실패");
+      }
+
       await _dio.post("/reviews", data: {
+        "movieId": widget.movieId,
         "movie_id": widget.movieId,
+        "rating": _rating,
         "ratting": _rating,
-        "content": _contentController.text,
-        "user_num": 1, // TODO: 로그인된 유저의 user_num으로 변경 필요
+        "content": _contentController.text.trim(),
+        "userNum": userNum,
+        "user_num": userNum,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("리뷰가 등록되었습니다!")),
       );
 
-      // 입력 초기화
       _contentController.clear();
+
       setState(() {
         _rating = 0;
       });
 
-      widget.onReviewSubmitted(); // 부모에게 새로고침 요청
+      widget.onReviewSubmitted();
     } catch (e) {
+      print("리뷰 등록 오류: $e");
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("리뷰 등록 실패")),
       );
-      print("리뷰 등록 오류: $e");
     } finally {
       setState(() {
         _isSubmitting = false;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _contentController.dispose();
+    super.dispose();
   }
 
   @override
@@ -77,11 +110,13 @@ class _ReviewInputState extends State<ReviewInput> {
         children: [
           const Text(
             "리뷰 작성",
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
-
-          // ⭐ 평점 선택 (0.5 단위)
           RatingBar(
             initialRating: _rating,
             minRating: 0.5,
@@ -90,9 +125,9 @@ class _ReviewInputState extends State<ReviewInput> {
             allowHalfRating: true,
             itemCount: 5,
             ratingWidget: RatingWidget(
-              full: Icon(Icons.star, color: Colors.yellowAccent),
-              half: Icon(Icons.star_half, color: Colors.yellowAccent),
-              empty: Icon(Icons.star_border, color: Colors.yellowAccent),
+              full: const Icon(Icons.star, color: Colors.yellowAccent),
+              half: const Icon(Icons.star_half, color: Colors.yellowAccent),
+              empty: const Icon(Icons.star_border, color: Colors.yellowAccent),
             ),
             onRatingUpdate: (rating) {
               setState(() {
@@ -100,10 +135,7 @@ class _ReviewInputState extends State<ReviewInput> {
               });
             },
           ),
-
           const SizedBox(height: 8),
-
-          // 📝 리뷰 내용 입력
           TextField(
             controller: _contentController,
             maxLines: 3,
@@ -113,13 +145,12 @@ class _ReviewInputState extends State<ReviewInput> {
               fillColor: const Color(0xFF141414),
               hintText: "리뷰 내용을 입력하세요",
               hintStyle: const TextStyle(color: Colors.white38),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
-
           const SizedBox(height: 8),
-
-          // 제출 버튼
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -128,7 +159,10 @@ class _ReviewInputState extends State<ReviewInput> {
                   ? const SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
                   : const Text("등록"),
             ),

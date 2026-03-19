@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="bitc.next502.flutter_server.mapper.ReviewMapper">
+
+    <!-- 영화별 리뷰 조회 -->
+    <select id="selectByMovieId"
+            parameterType="int"
+            resultType="bitc.next502.flutter_server.dto.ReviewDTO">
+        SELECT
+            r.review_id AS reviewId,
+            r.user_num AS userNum,
+            r.movie_id AS movieId,
+            r.ratting AS rating,
+            r.content AS content,
+            u.nickname AS nickname,
+            r.created_at AS createdAt,
+            r.updated_at AS updatedAt
+        FROM reviews r
+                 INNER JOIN users u ON r.user_num = u.user_num
+        WHERE r.movie_id = #{movieId}
+        ORDER BY r.created_at DESC
+    </select>
+
+    <!-- 리뷰 삽입 -->
+    <insert id="insertReview"
+            parameterType="bitc.next502.flutter_server.dto.ReviewDTO"
+            useGeneratedKeys="true"
+            keyProperty="reviewId">
+        INSERT INTO reviews (
+            user_num,
+            movie_id,
+            ratting,
+            content,
+            created_at,
+            updated_at
+        )
+        VALUES (
+                   #{userNum},
+                   #{movieId},
+                   #{rating},
+                   #{content},
+                   #{createdAt},
+                   #{updatedAt}
+               )
+    </insert>
+
+</mapper>
