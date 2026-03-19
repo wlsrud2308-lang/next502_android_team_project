@@ -1,6 +1,7 @@
 package bitc.next502.flutter_server.mapper;
 
 import bitc.next502.flutter_server.dto.UserDTO;
+import bitc.next502.flutter_server.dto.WithdrawalDTO;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -11,6 +12,9 @@ public interface LoginMapper {
   void insertUser(UserDTO user);
 
   UserDTO getUserByUid(String uid);
+
+  void insertWithdrawalReason(WithdrawalDTO dto);
+  void deleteUserByUid(String uid);
 }
 
 

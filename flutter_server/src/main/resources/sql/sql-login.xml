@@ -25,4 +25,13 @@
         FROM users
         WHERE uid = #{uid}
     </select>
+
+    <insert id="insertWithdrawalReason">
+        INSERT INTO withdrawal_history (email, reason)
+        VALUES (#{email}, #{reason})
+    </insert>
+
+    <delete id="deleteUserByUid">
+        DELETE FROM users WHERE uid = #{uid}
+    </delete>
 </mapper>

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
-
-
 import 'package:flutter_app/screens/home_screen.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -16,29 +14,41 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final User? currentUser = FirebaseAuth.instance.currentUser;
 
+  // 컨트롤러들
+  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _withdrawalReasonController = TextEditingController();
+
   Map<String, dynamic>? userData;
-  bool isLoading = true; // 로딩 상태
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData(); // 화면이 켜질 때 자동으로 데이터 불러오기
+    _fetchUserData();
   }
 
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+
+    _withdrawalReasonController.dispose();
+    super.dispose();
+  }
+
+  // 유저 정보 불러오기
   Future<void> _fetchUserData() async {
     if (currentUser == null) {
       setState(() => isLoading = false);
       return;
     }
-
     try {
       final dio = Dio();
-      // 내 파이어베이스 UID를 주소에 넣어서 백엔드에 요청
       final response = await dio.get('http://10.0.2.2:8080/flutter/user/${currentUser!.uid}');
-
       if (response.statusCode == 200) {
         setState(() {
-          userData = response.data; // 가져온 데이터 저장
+          userData = response.data;
           isLoading = false;
         });
       }
@@ -48,9 +58,182 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  // 비밀번호 변경 로직
+  Future<void> _handlePasswordChange() async {
+    final String currentPw = _currentPasswordController.text.trim();
+    final String newPw = _newPasswordController.text.trim();
+
+    if (currentPw.isEmpty || newPw.isEmpty) {
+      _showSnackBar("모든 칸을 입력해주세요.");
+      return;
+    }
+
+    try {
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: currentUser!.email!,
+        password: currentPw,
+      );
+      await currentUser!.reauthenticateWithCredential(credential);
+      await currentUser!.updatePassword(newPw);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      _showSnackBar("비밀번호가 성공적으로 변경되었습니다.");
+      _currentPasswordController.clear();
+      _newPasswordController.clear();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        _showSnackBar("현재 비밀번호가 일치하지 않습니다.");
+      } else if (e.code == 'weak-password') {
+        _showSnackBar("새 비밀번호는 6자리 이상이어야 합니다.");
+      } else {
+        _showSnackBar("오류: ${e.message}");
+      }
+    } catch (e) {
+      _showSnackBar("알 수 없는 오류가 발생했습니다.");
+    }
+  }
+
+  // 서비스 탈퇴 로직 (MySQL 사유 저장 + Firebase 삭제)
+  Future<void> _handleWithdrawal() async {
+    final String reason = _withdrawalReasonController.text.trim();
+    if (reason.isEmpty) {
+      _showSnackBar("탈퇴 사유를 입력해주세요.");
+      return;
+    }
+
+    try {
+      setState(() => isLoading = true);
+
+      // 1. Spring Boot 서버에 사유 저장 및 DB 유저 삭제
+      final dio = Dio();
+      final response = await dio.post(
+        'http://10.0.2.2:8080/flutter/withdraw',
+        data: {
+          "uid": currentUser!.uid,
+          "email": currentUser!.email,
+          "reason": reason,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // 2. 파이어베이스 계정 삭제
+        await currentUser!.delete();
+
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MovieHomeScreen()),
+              (route) => false,
+        );
+        _showSnackBar("그동안 이용해주셔서 감사합니다.");
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        _showSnackBar("보안을 위해 다시 로그인한 뒤 탈퇴를 진행해주세요.");
+      } else {
+        _showSnackBar("탈퇴 실패: ${e.message}");
+      }
+    } catch (e) {
+      _showSnackBar("서버 통신 중 오류가 발생했습니다.");
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  // 비밀번호 변경 다이얼로그
+  void _showPasswordChangeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text("비밀번호 변경", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _currentPasswordController,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: _dialogInputDecoration("현재 비밀번호"),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: _newPasswordController,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: _dialogInputDecoration("새 비밀번호"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("취소", style: TextStyle(color: Colors.white54))),
+          TextButton(
+            onPressed: _handlePasswordChange,
+            child: const Text("변경하기", style: TextStyle(color: Colors.purpleAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 서비스 탈퇴 다이얼로그
+  void _showWithdrawalDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text("서비스 탈퇴", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("정말 탈퇴하시겠습니까?\n탈퇴 사유를 남겨주시면 큰 도움이 됩니다.",
+                style: TextStyle(color: Colors.white70, fontSize: 14)),
+            const SizedBox(height: 15),
+            TextField(
+              controller: _withdrawalReasonController,
+              maxLines: 3,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "사유를 입력해주세요 (필수)",
+                hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.05),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("취소", style: TextStyle(color: Colors.white54))),
+          ElevatedButton(
+            onPressed: _handleWithdrawal,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text("탈퇴하기", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _dialogInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+      enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
+      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.purpleAccent)),
+    );
+  }
+
+  void _showSnackBar(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating));
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 로딩 중일 때는 동그라미 로딩창 표시
     if (isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFF0D0D0D),
@@ -59,8 +242,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     final String displayEmail = currentUser?.email ?? "이메일 정보 없음";
-
-    // DB에서 가져온 정보 세팅 (없으면 '정보 없음' 표시)
     final String displayNickname = userData?['nickname'] ?? "정보 없음";
     final String displayName = userData?['userName'] ?? "정보 없음";
     final String displayTel = userData?['userTel']?.toString() ?? "정보 없음";
@@ -85,26 +266,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
           children: [
             const SizedBox(height: 20),
 
-            // 1. 내 계정 정보 섹션
             _buildSectionTitle("로그인 정보"),
             _buildInfoTile("이메일 계정", displayEmail, isEditable: false),
 
-            _buildInfoTile("비밀번호 변경", "마지막 변경: 3개월 전", isEditable: true),
+            GestureDetector(
+              onTap: _showPasswordChangeDialog,
+              child: _buildInfoTile("비밀번호 변경", "보안을 위해 주기적으로 변경하세요", isEditable: true),
+            ),
 
             _buildInfoTile("닉네임", displayNickname, isEditable: true),
 
             const SizedBox(height: 30),
 
-            // 2. 개인정보 섹션
             _buildSectionTitle("개인정보"),
-            // DB에서 가져온 값 세팅
             _buildInfoTile("이름 / 실명", displayName, isEditable: true),
             _buildInfoTile("휴대폰 번호", displayTel, isEditable: true),
             _buildInfoTile("생년월일", displayBirth, isEditable: false),
 
             const SizedBox(height: 30),
 
-            // 하단 로그아웃/탈퇴
             Center(
               child: Column(
                 children: [
@@ -120,8 +300,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     },
                     child: const Text("로그아웃", style: TextStyle(color: Colors.redAccent, fontSize: 14)),
                   ),
+                  // 서비스 탈퇴하기 버튼 연결
                   TextButton(
-                    onPressed: () {},
+                    onPressed: _showWithdrawalDialog,
                     child: const Text("서비스 탈퇴하기",
                         style: TextStyle(color: Colors.white24, fontSize: 12, decoration: TextDecoration.underline)),
                   ),
@@ -135,6 +316,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
+  // _buildSectionTitle 및 _buildInfoTile 함수는 그대로 유지
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),

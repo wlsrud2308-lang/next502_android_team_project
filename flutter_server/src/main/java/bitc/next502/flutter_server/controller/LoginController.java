@@ -1,7 +1,8 @@
 package bitc.next502.flutter_server.controller;
 
 import bitc.next502.flutter_server.dto.UserDTO;
-import bitc.next502.flutter_server.service.LoginServiceImpl;
+import bitc.next502.flutter_server.dto.WithdrawalDTO;
+import bitc.next502.flutter_server.service.LoginService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +12,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/flutter")
 public class LoginController {
 
-  private final LoginServiceImpl loginService;
+
+  private final LoginService loginService;
 
   @PostMapping("/signup")
   public Object signup(@RequestBody UserDTO user){
@@ -19,7 +21,14 @@ public class LoginController {
     return user;
   }
 
-  // 플러터에서 UID로 내 정보 조회
+
+  @PostMapping("/withdraw")
+  public ResponseEntity<String> withdraw(@RequestBody WithdrawalDTO dto) {
+
+    loginService.withdrawUser(dto);
+    return ResponseEntity.ok("탈퇴 완료");
+  }
+
   @GetMapping("/user/{uid}")
   public ResponseEntity<UserDTO> getUserInfo(@PathVariable("uid") String uid) {
     UserDTO user = loginService.getUserByUid(uid);
