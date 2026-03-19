@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/screens/movie_detail.dart';
 import '../models/movie.dart';
 import '../service/movie_service.dart';
 
@@ -15,7 +16,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
   String _selectedFilter = 'all'; // all, popular, topRated, nowPlaying
   bool _isLoading = true;
 
-  // 🔥 UI에서 임시 찜 상태 관리
+  // UI에서 임시 찜 상태 관리
   final Map<int, bool> _favoriteMap = {};
 
   @override
@@ -159,84 +160,95 @@ class _MovieListScreenState extends State<MovieListScreen> {
   Widget _buildMovieListItem(Movie movie) {
     final isFav = _favoriteMap[movie.id] ?? false;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.02))),
-      ),
-      child: Row(
-        children: [
-          // ⭐ 찜 버튼 (UI에서만 반응)
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _favoriteMap[movie.id] = !isFav;
-              });
-            },
-            child: Icon(
-              isFav ? Icons.star : Icons.star_border,
-              color: isFav ? Colors.orangeAccent : Colors.white10,
-              size: 22,
-            ),
+    return GestureDetector(
+      onTap: () {
+        // 영화 클릭 → 상세 페이지 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MovieDetailScreen(movieId: movie.id),
           ),
-          const SizedBox(width: 8),
-
-          // 🎬 포스터
-          Container(
-            width: 44,
-            height: 60,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: const Color(0xFF1A1A1A),
-            ),
-            child: movie.posterPath != null
-                ? ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Image.network(
-                "https://image.tmdb.org/t/p/w200${movie.posterPath}",
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.movie, color: Colors.white24),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.02))),
+        ),
+        child: Row(
+          children: [
+            // ⭐ 찜 버튼
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _favoriteMap[movie.id] = !isFav;
+                });
+              },
+              child: Icon(
+                isFav ? Icons.star : Icons.star_border,
+                color: isFav ? Colors.orangeAccent : Colors.white10,
+                size: 22,
               ),
-            )
-                : const Icon(Icons.movie, color: Colors.white24),
-          ),
-          const SizedBox(width: 12),
+            ),
+            const SizedBox(width: 8),
 
-          // 제목 + 개봉일
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // 🎬 포스터
+            Container(
+              width: 44,
+              height: 60,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: const Color(0xFF1A1A1A),
+              ),
+              child: movie.posterPath != null
+                  ? ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.network(
+                  "https://image.tmdb.org/t/p/w200${movie.posterPath}",
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.movie, color: Colors.white24),
+                ),
+              )
+                  : const Icon(Icons.movie, color: Colors.white24),
+            ),
+            const SizedBox(width: 12),
+
+            // 제목 + 개봉일
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    movie.title,
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "개봉일: ${movie.releaseDate ?? '-'}",
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+
+            // 평점
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  movie.title,
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  (movie.voteAverage ?? 0).toStringAsFixed(1),
+                  style: const TextStyle(
+                    color: Colors.purpleAccent,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  "개봉일: ${movie.releaseDate ?? '-'}",
-                  style: const TextStyle(color: Colors.white38, fontSize: 11),
-                ),
+                const Text("평점", style: TextStyle(color: Colors.white24, fontSize: 10)),
               ],
             ),
-          ),
-
-          // 평점
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                (movie.voteAverage ?? 0).toStringAsFixed(1),
-                style: const TextStyle(
-                  color: Colors.purpleAccent,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Text("평점", style: TextStyle(color: Colors.white24, fontSize: 10)),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
