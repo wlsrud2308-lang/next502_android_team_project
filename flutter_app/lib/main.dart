@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_app/movie_debug_screen.dart';
 import 'package:flutter_app/screens/detail_screen.dart';
 import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/login_screen.dart';
@@ -48,7 +47,8 @@ class MyApp extends StatelessWidget {
 
           // 무비 디테일 스크린 확인용
           if (snapshot.hasData) {
-            return const DetailScreen(postId: 125);
+            // return const MovieHomeScreen();
+            return const MovieDetailScreen2(movieId: 13);
           }
 
           // 로그인 정보가 없으면 로그인 페이지로!
