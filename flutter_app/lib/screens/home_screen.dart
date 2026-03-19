@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/screens/edit_screen.dart';
 import 'package:flutter_app/screens/movie_info.dart';
+import 'package:flutter_app/service/post_service.dart';
+import 'package:flutter_app/service/post_service_impl.dart';
+import 'package:flutter_app/models/post_model.dart';  // 게시글 모델
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -10,14 +13,53 @@ class MovieHomeScreen extends StatefulWidget {
 }
 
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
-  int _selectedCategoryIndex = 1;
-
+  int _selectedCategoryIndex = 3;  // 기본적으로 자유게시판을 첫 번째로 선택
   final List<String> _categories = [
     "영화 정보",
     "해외영화",
     "국내영화",
     "자유게시판"
   ];
+
+  late Future<List<PostDto>> _posts;  // 게시글 목록을 담을 Future
+
+  final PostService _postService = PostServiceImpl();  // 서비스 객체
+
+  @override
+  void initState() {
+    super.initState();
+    _posts = fetchPosts("자유");  // 기본적으로 자유 게시판 데이터를 "자유"로 불러옴
+  }
+
+  // 게시판 카테고리 변경 시 데이터 가져오기
+  Future<List<PostDto>> fetchPosts(String boardType) async {
+    try {
+      var posts = await _postService.getPostsByBoard(boardType);
+      return posts;
+    } catch (e) {
+      return [];  // 오류 발생 시 빈 리스트 반환
+    }
+  }
+
+  // 탭을 변경할 때마다 새로운 데이터를 가져오기
+  void _changeCategory(int index) {
+    setState(() {
+      _selectedCategoryIndex = index;
+      // 영화 정보 탭 클릭 시 MovieListScreen으로 이동
+      if (index == 0) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MovieListScreen(), // 영화 정보 화면
+          ),
+        );
+      } else {
+        // '자유게시판'을 '자유'로 변경
+        String boardType = _categories[index] == '자유게시판' ? '자유' : _categories[index].replaceAll('영화', '');
+        _posts = fetchPosts(boardType);  // 새로운 Future 객체 할당
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +91,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           _buildBoxOfficeBar(),
           _buildBarCategoryNav(),
           Expanded(
-            child: _buildOtherCategoryContent(),
+            child: _buildSelectedCategoryContent(),  // 선택된 카테고리의 게시글 내용 표시
           ),
         ],
       ),
@@ -99,7 +141,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  // ====================== 카테고리 바 (🔥 수정됨)
+  // ====================== 카테고리 바
   Widget _buildBarCategoryNav() {
     return Container(
       height: 50,
@@ -115,23 +157,11 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         itemCount: _categories.length,
         itemBuilder: (context, index) {
           bool isSelected = _selectedCategoryIndex == index;
-
           return Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                print("클릭됨: $index"); // 디버깅용
-
-                if (index == 0) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MovieListScreen(),
-                    ),
-                  );
-                } else {
-                  setState(() => _selectedCategoryIndex = index);
-                }
+                _changeCategory(index);  // 탭을 변경할 때 데이터를 갱신
               },
               child: Container(
                 alignment: Alignment.center,
@@ -163,74 +193,40 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  // ====================== 나머지 콘텐츠
-  Widget _buildOtherCategoryContent() {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      children: [
-        _buildSectionHeader("🔥 실시간 인기글"),
-        _buildFilterChips(),
-        const SizedBox(height: 10),
-        _buildPostItem(context, "1", "듄: 파트2 아이맥스 명당자리 공유", "해외영화",
-            "무비러버", "2시간전", 45),
-        _buildPostItem(context, "2", "파묘 1000만 돌파 확정?", "국내영화",
-            "스포주의", "4시간전", 128),
-        _buildPostItem(context, "3", "삼체 후기 (원작 비교)", "OTT",
-            "SF매니아", "10시간전", 22),
-        _buildPostItem(context, "4", "이번주 개봉작 한줄평 모음", "영화뉴스",
-            "시네필", "13시간전", 56),
-      ],
+  // ====================== 선택된 카테고리 콘텐츠 (게시글 목록)
+  Widget _buildSelectedCategoryContent() {
+    return FutureBuilder<List<PostDto>>(
+      key: ValueKey<String>(_categories[_selectedCategoryIndex]),  // key를 사용하여 새로운 Future로 강제 갱신
+      future: _posts,  // _posts는 현재 선택된 카테고리에 해당하는 게시글 리스트
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return const Center(child: Text('게시글 로드 실패'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('게시글이 없습니다.'));
+        } else {
+          return ListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, index) {
+              var post = snapshot.data![index];
+              return _buildPostItem(
+                context,
+                post.postId.toString(),
+                post.title,
+                post.category ?? '기타',
+                post.authorName,
+                post.createdAt,
+                post.commentCnt,
+              );
+            },
+          );
+        }
+      },
     );
   }
 
-  // ====================== UI 컴포넌트
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-      child: Row(
-        children: [
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          const Spacer(),
-          const Icon(Icons.chevron_right, color: Colors.white54),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChips() {
-    final filters = ["전체", "해외영화", "국내영화", "OTT", "기대작"];
-
-    return SizedBox(
-      height: 35,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 16),
-        children: filters
-            .map(
-              (f) => Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ActionChip(
-              label: Text(f,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600)),
-              backgroundColor: const Color(0xFF2A2A2A),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4)),
-              onPressed: () {},
-            ),
-          ),
-        )
-            .toList(),
-      ),
-    );
-  }
-
+  // ====================== 게시글 아이템
   Widget _buildPostItem(
       BuildContext context,
       String rank,
@@ -238,7 +234,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       String category,
       String author,
       String time,
-      int comments) {
+      int comments,
+      ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
