@@ -226,4 +226,22 @@ class PostServiceImpl implements PostService {
       return [];
     }
   }
+
+  // ====================== 인기글 조회
+  @override
+  Future<List<PostDto>> getPopularPosts() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/api/post/popular'));
+      if (response.statusCode == 200) {
+        List<dynamic> body = jsonDecode(utf8.decode(response.bodyBytes));
+        return body.map((item) => PostDto.fromJson(item)).toList();
+      } else {
+        print("❌ [getPopularPosts 에러]: 상태 코드 ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("❌ [getPopularPosts 예외]: $e");
+      return [];
+    }
+  }
 }

@@ -24,4 +24,6 @@ public interface PostService {
 
     // 7. 게시글 검색
     List<PostDTO> searchPosts(String query);  // 검색 메서드 추가
+
+    List<PostDTO> getPopularPosts();
 }

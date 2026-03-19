@@ -35,4 +35,6 @@ public interface PostMapper {
 
     // 8. 게시글 검색 기능 추가
     List<PostDTO> searchPosts(@Param("query") String query);
+
+    List<PostDTO> getPopularPosts();
 }

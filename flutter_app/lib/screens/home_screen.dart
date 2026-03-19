@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; //  Firebase Auth 추가
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/screens/edit_screen.dart';
-import 'package:flutter_app/screens/login_screen.dart'; //  로그인 스크린 추가
+import 'package:flutter_app/screens/login_screen.dart';
 import 'package:flutter_app/screens/movie_info.dart';
 import 'package:flutter_app/screens/search_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
@@ -16,13 +16,15 @@ class MovieHomeScreen extends StatefulWidget {
 }
 
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
-  int _selectedCategoryIndex = 3;
+  int _selectedCategoryIndex = 0; // 초기 선택값 자유게시판
 
   final List<String> _categories = [
+    "인기글", // ✅ 인기글 추가
     "영화 정보",
     "해외영화",
     "국내영화",
-    "자유게시판"
+    "자유게시판",
+
   ];
 
   late Future<List<PostDto>> _posts;
@@ -32,12 +34,35 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _posts = fetchPosts("자유");
+
+    // 초기 탭이 인기글(0번)이면 fetchPopularPosts(), 아니면 fetchPosts(boardType)
+    if (_selectedCategoryIndex == 0) {
+      _posts = fetchPopularPosts();
+    } else {
+      String boardType = _categories[_selectedCategoryIndex] == '자유게시판'
+          ? '자유'
+          : _categories[_selectedCategoryIndex].replaceAll('영화', '');
+      _posts = fetchPosts(boardType);
+    }
   }
 
+  // 게시글 가져오기
   Future<List<PostDto>> fetchPosts(String boardType) async {
     try {
       var posts = await _postService.getPostsByBoard(boardType);
+      if (posts.isEmpty) {
+        throw '게시글이 없습니다';
+      }
+      return posts;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 인기글 가져오기
+  Future<List<PostDto>> fetchPopularPosts() async {
+    try {
+      var posts = await _postService.getPopularPosts();
       if (posts.isEmpty) {
         throw '게시글이 없습니다';
       }
@@ -51,18 +76,22 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     setState(() {
       _selectedCategoryIndex = index;
 
-      if (index == 0) {
+      if (index == 1) {
+        // 영화 정보 페이지
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const MovieListScreen(),
           ),
         );
+      } else if (_categories[index] == "인기글") {
+        // 인기글
+        _posts = fetchPopularPosts();
       } else {
+        // 자유게시판, 해외, 국내
         String boardType = _categories[index] == '자유게시판'
             ? '자유'
             : _categories[index].replaceAll('영화', '');
-
         _posts = fetchPosts(boardType);
       }
     });
@@ -77,7 +106,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         leading: const Icon(Icons.movie_filter, color: Colors.purpleAccent),
         title: const Text("영화 앱", style: TextStyle(color: Colors.white)),
         actions: [
-          // 🔍 검색 버튼 → 바로 검색 페이지 이동
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white30),
             onPressed: () {
@@ -89,15 +117,11 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               );
             },
           ),
-          // 👤 내 정보 버튼 → 로그인 상태 분기 처리
           IconButton(
             icon: const Icon(Icons.person_outline, color: Colors.white30),
             onPressed: () {
-              // 🔥 현재 Firebase 로그인 상태 확인
               User? user = FirebaseAuth.instance.currentUser;
-
               if (user != null) {
-                // 로그인 상태: 개인정보 수정 페이지로 이동
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -105,7 +129,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                   ),
                 );
               } else {
-                // 비로그인 상태: 로그인 페이지로 이동
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -232,11 +255,16 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       future: _posts,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.purpleAccent));
+          return const Center(
+              child: CircularProgressIndicator(color: Colors.purpleAccent));
         } else if (snapshot.hasError) {
-          return const Center(child: Text('게시글 로드 실패', style: TextStyle(color: Colors.white54)));
+          return const Center(
+              child:
+              Text('게시글 로드 실패', style: TextStyle(color: Colors.white54)));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('게시글이 없습니다.', style: TextStyle(color: Colors.white54)));
+          return const Center(
+              child:
+              Text('게시글이 없습니다.', style: TextStyle(color: Colors.white54)));
         } else {
           return ListView.builder(
             itemCount: snapshot.data!.length,
