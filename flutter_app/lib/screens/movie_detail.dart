@@ -1,235 +1,304 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+
+import '../widgets/review_input.dart';
+import '../widgets/review_list.dart';
 
 class MovieDetailScreen extends StatefulWidget {
-  final Map<String, dynamic>? movieData;
-  const MovieDetailScreen({super.key, required this.movieData});
+  final int movieId;
+
+  const MovieDetailScreen({super.key, required this.movieId});
 
   @override
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();
 }
 
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
-  final TextEditingController _commentController = TextEditingController();
+  late Future<Map<String, dynamic>> movieFuture;
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:8080'));
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.movieData == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0D0D0D),
-        body: Center(child: Text("데이터를 불러올 수 없습니다.", style: TextStyle(color: Colors.white))),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D0D0D),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.share_outlined, color: Colors.white70), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.star_border, color: Colors.white70), onPressed: () {}),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildMovieHeader(),
-                  _buildStatGrid(),
-
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-                    child: Text("줄거리", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      "영화의 상세 줄거리 정보입니다. 데이터베이스에서 정보를 가져오지 못한 경우 기본 안내 문구가 출력됩니다.",
-                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14, height: 1.5),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-                  const Divider(color: Colors.white10, thickness: 8),
-
-                  _buildCommentHeader(),
-                  _buildCommentItem("시네필21", "듄은 역시 아이맥스로 봐야 제맛이네요. 영상미 미쳤습니다.", "10분 전"),
-                  _buildCommentItem("무비러버", "평점이 왜 이렇게 높은지 알겠네요. 간만에 수작입니다.", "1시간 전"),
-                  _buildCommentItem("익명", "개인적으로는 전편보다 호흡이 길어서 조금 지루했어요.", "3시간 전"),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ),
-          _buildCommentInput(),
-        ],
-      ),
-    );
+  void initState() {
+    super.initState();
+    movieFuture = fetchMovie(widget.movieId);
   }
 
-  Widget _buildMovieHeader() {
+  Future<Map<String, dynamic>> fetchMovie(int movieId) async {
+    final res = await _dio.get("/movies/$movieId");
+    return Map<String, dynamic>.from(res.data);
+  }
+
+  void refreshReviews() {
+    setState(() {});
+  }
+
+  // ================= 배우 =================
+  Widget _buildCast(Map movie) {
+    final castList = movie['cast'];
+    if (castList == null || castList.isEmpty) return const SizedBox();
+
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 100,
-            height: 140,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: const Icon(Icons.movie_filter, color: Colors.white10, size: 40),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                    widget.movieData!['title'] ?? "제목 정보 없음",
-                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)
-                ),
-                const SizedBox(height: 8),
-                Text(
-                    "${widget.movieData!['year'] ?? '연도 미상'} · ${widget.movieData!['genre'] ?? '장르 정보 없음'}",
-                    style: const TextStyle(color: Colors.white38, fontSize: 13)
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _buildBadge("IMAX", Colors.blueAccent),
-                    const SizedBox(width: 6),
-                    _buildBadge("Dolby", Colors.deepPurpleAccent),
-                  ],
-                )
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatGrid() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141414),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem("평점", widget.movieData!['rating'] ?? "0.0", Colors.purpleAccent),
-          _buildStatItem("예매율", "1위", Colors.orangeAccent),
-          _buildStatItem("관객수", "정보없음", Colors.white70),
-          _buildStatItem("신선도", "90%", Colors.redAccent),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(color: Colors.white24, fontSize: 11)),
-        const SizedBox(height: 6),
-        Text(value, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildBadge(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: color.withOpacity(0.5))
-      ),
-      child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _buildCommentHeader() {
-    return const Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          Text("댓글", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-          SizedBox(width: 6),
-          Text("128", style: TextStyle(color: Colors.purpleAccent, fontSize: 12, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommentItem(String user, String content, String time) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.02))),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const CircleAvatar(radius: 10, backgroundColor: Colors.white10, child: Icon(Icons.person, size: 12, color: Colors.white24)),
-              const SizedBox(width: 8),
-              Text(user, style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
-              const Spacer(),
-              Text(time, style: const TextStyle(color: Colors.white24, fontSize: 10)),
-            ],
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              "출연 배우",
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(content, style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4)),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: castList.length,
+              itemBuilder: (context, index) {
+                final cast = castList[index];
+                return Container(
+                  width: 80,
+                  margin: const EdgeInsets.only(left: 16),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundImage: cast['profile_path'] != null
+                            ? NetworkImage("https://image.tmdb.org/t/p/w200${cast['profile_path']}")
+                            : null,
+                        backgroundColor: Colors.grey[800],
+                        child: cast['profile_path'] == null
+                            ? const Icon(Icons.person, color: Colors.white24)
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        cast['name'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                      Text(
+                        cast['character'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white38, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCommentInput() {
-    return Container(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 10, left: 16, right: 16, top: 10),
-      decoration: const BoxDecoration(
-          color: Color(0xFF161616),
-          border: Border(top: BorderSide(color: Colors.white10))
+  // ================= 감독 =================
+  Widget _buildDirector(Map movie) {
+    final crewList = movie['crew'];
+    if (crewList == null) return const SizedBox();
+
+    final director = crewList.firstWhere(
+          (c) => c['job'] == 'Director',
+      orElse: () => null,
+    );
+    if (director == null) return const SizedBox();
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundImage: director['profile_path'] != null
+                ? NetworkImage("https://image.tmdb.org/t/p/w200${director['profile_path']}")
+                : null,
+            backgroundColor: Colors.grey[800],
+            child: director['profile_path'] == null
+                ? const Icon(Icons.person, color: Colors.white24)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("감독", style: TextStyle(color: Colors.white38, fontSize: 12)),
+              Text(
+                director['name'] ?? '',
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ],
       ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _commentController,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: const InputDecoration(
-                    hintText: "따뜻한 댓글을 남겨주세요",
-                    hintStyle: TextStyle(color: Colors.white24, fontSize: 13),
-                    border: InputBorder.none
-                ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: movieFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF0D0D0D),
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: const Color(0xFF0D0D0D),
+            body: Center(
+              child: Text(
+                "영화 정보 불러오기 실패: ${snapshot.error}",
+                style: const TextStyle(color: Colors.white),
               ),
             ),
-            TextButton(
-              onPressed: () {},
-              child: const Text("등록", style: TextStyle(color: Colors.purpleAccent, fontWeight: FontWeight.bold)),
+          );
+        }
+
+        final movie = snapshot.data!;
+        final backdropPath = movie['backdropPath'] ?? movie['backdrop_path'];
+        final posterPath = movie['posterPath'] ?? movie['poster_path'];
+        final releaseDate = movie['releaseDate'] ?? movie['release_date'];
+        final voteAverage = movie['voteAverage'] ?? movie['vote_average'];
+
+        return Scaffold(
+          backgroundColor: const Color(0xFF0D0D0D),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF0D0D0D),
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 포스터 이미지
+                backdropPath != null
+                    ? Image.network(
+                  "https://image.tmdb.org/t/p/w780$backdropPath",
+                  height: 240,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                )
+                    : posterPath != null
+                    ? Image.network(
+                  "https://image.tmdb.org/t/p/w780$posterPath",
+                  height: 240,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                )
+                    : Container(
+                  height: 240,
+                  color: Colors.grey[900],
+                  child: const Center(
+                    child: Icon(Icons.movie, color: Colors.white24, size: 60),
+                  ),
+                ),
+                // 제목 + 날짜 전체
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        movie['title'] ?? "제목 없음",
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        releaseDate ?? "날짜 미상",
+                        style: const TextStyle(color: Colors.white38, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+                // 평점 / 상영시간 / 인기도
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                        color: const Color(0xFF141414),
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            const Text("평점", style: TextStyle(color: Colors.white24, fontSize: 11)),
+                            const SizedBox(height: 6),
+                            Text(
+                              voteAverage != null ? voteAverage.toString() : "0.0",
+                              style: const TextStyle(
+                                  color: Colors.purpleAccent,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            const Text("상영시간", style: TextStyle(color: Colors.white24, fontSize: 11)),
+                            const SizedBox(height: 6),
+                            Text(
+                              movie['runtime'] != null ? "${movie['runtime']}분" : "정보 없음",
+                              style: const TextStyle(
+                                  color: Colors.blueAccent,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            const Text("인기도", style: TextStyle(color: Colors.white24, fontSize: 11)),
+                            const SizedBox(height: 6),
+                            Text(
+                              movie['popularity']?.toString() ?? "0",
+                              style: const TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // 줄거리
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    movie['overview'] ?? "줄거리 정보 없음",
+                    style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                  ),
+                ),
+                // 배우 / 감독
+                _buildCast(movie),
+                _buildDirector(movie),
+                const SizedBox(height: 16),
+                // 리뷰 작성
+                ReviewInput(
+                  movieId: widget.movieId,
+                  onReviewSubmitted: refreshReviews,
+                ),
+                // 리뷰 리스트
+                ReviewList(movieId: widget.movieId),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

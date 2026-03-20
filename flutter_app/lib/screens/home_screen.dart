@@ -8,7 +8,7 @@ import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/models/post_model.dart';
 import 'package:flutter_app/widgets/bottom_nav_bar.dart';
-import 'package:flutter_app/widgets/popular_posts_widget.dart';
+import 'package:flutter_app/widgets/popular_posts.dart';
 
 import 'global_post_list.dart';
 
@@ -220,7 +220,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
 
   Widget _buildSelectedCategoryContent() {
     if (_selectedCategoryIndex == 0) {
-      return const PopularPostsWidget();
+      return const PopularPosts();
     } else {
       return _buildPostList();
     }
