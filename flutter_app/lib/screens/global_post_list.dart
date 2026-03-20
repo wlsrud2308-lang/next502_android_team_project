@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/post_model.dart';
+import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/post_write_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
@@ -33,35 +34,32 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
     });
   }
 
-
+  // 🔹 BottomNavBar 클릭 시 이전 스택 제거
   void _onBottomNavTap(int index) {
-    if (index == 2) return;
+    if (index == 2) return; // 현재 화면이면 패스
 
-    if (index == 0) {
-      Navigator.pop(context, 0);
-    } else {
-      Widget nextScreen;
-      switch (index) {
-        case 1:
-          nextScreen = const MovieListScreen();
-          break;
-        case 3:
-          nextScreen = const DomesticMovieBoardScreen();
-          break;
-        case 4:
-          nextScreen = const FreeBoardScreen();
-          break;
-        default:
-          return;
-      }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => nextScreen),
-      ).then((value) {
-        if (value != null) Navigator.pop(context, value);
-      });
+    Widget nextScreen;
+    switch (index) {
+      case 0:
+        nextScreen = const MovieHomeScreen();
+        break;
+      case 1:
+        nextScreen = const MovieListScreen();
+        break;
+      case 3:
+        nextScreen = const DomesticMovieBoardScreen();
+        break;
+      case 4:
+        nextScreen = const FreeBoardScreen();
+        break;
+      default:
+        return;
     }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => nextScreen),
+    );
   }
 
   List<PostDto> _getSortedPosts(List<PostDto> posts) {
@@ -86,13 +84,22 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text("해외영화", style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "해외영화",
+          style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // 🔹 뒤로가기 → 홈으로 이동, 검은 화면 방지
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const MovieHomeScreen()),
+            );
+          },
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -119,7 +126,6 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
                   if (rawPosts.isEmpty) {
                     return const Center(child: Text("게시글이 없습니다."));
                   }
-
                   final posts = _getSortedPosts(rawPosts);
 
                   return ListView.builder(
@@ -215,10 +221,10 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
               child: Column(
                 children: [
                   Text(
-                      post.createdAt.length >= 16
-                          ? post.createdAt.substring(11, 16)
-                          : post.createdAt,
-                      style: const TextStyle(color: Colors.black26, fontSize: 11)
+                    post.createdAt.length >= 16
+                        ? post.createdAt.substring(11, 16)
+                        : post.createdAt,
+                    style: const TextStyle(color: Colors.black26, fontSize: 11),
                   ),
                   const SizedBox(height: 4),
                   if (post.likeCnt > 0)
@@ -229,7 +235,8 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text("${post.likeCnt}",
-                          style: const TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(
+                              color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
                     ),
                 ],
               ),

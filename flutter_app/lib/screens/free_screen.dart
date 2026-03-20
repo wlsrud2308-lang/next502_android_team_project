@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/post_model.dart';
 import 'package:flutter_app/screens/global_post_list.dart';
+import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/post_write_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
@@ -13,10 +14,10 @@ class FreeBoardScreen extends StatefulWidget {
   const FreeBoardScreen({super.key});
 
   @override
-  State<FreeBoardScreen> createState() => _FreeBoardScreen();
+  State<FreeBoardScreen> createState() => _FreeBoardScreenState();
 }
 
-class _FreeBoardScreen extends State<FreeBoardScreen> {
+class _FreeBoardScreenState extends State<FreeBoardScreen> {
   final PostService _postService = PostServiceImpl();
   late Future<List<PostDto>> _postsFuture;
   String _currentSort = "최신순";
@@ -33,34 +34,33 @@ class _FreeBoardScreen extends State<FreeBoardScreen> {
     });
   }
 
+  // 🔹 BottomNavBar 클릭 처리 (홈 이동 시 스택 제거)
   void _onBottomNavTap(int index) {
-    if (index == 4) return;
+    if (index == 4) return; // 현재 화면이면 패스
 
-    if (index == 0) {
-      Navigator.pop(context, 0);
-    } else {
-      Widget nextScreen;
-      switch (index) {
-        case 1:
-          nextScreen = const MovieListScreen();
-          break;
-        case 3:
-          nextScreen = const DomesticMovieBoardScreen();
-          break;
-        case 2:
-          nextScreen = const MovieBoardScreen();
-          break;
-        default:
-          return;
-      }
+    Widget nextScreen;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => nextScreen),
-      ).then((value) {
-        if (value != null) Navigator.pop(context, value);
-      });
+    switch (index) {
+      case 0:
+        nextScreen = const MovieHomeScreen();
+        break;
+      case 1:
+        nextScreen = const MovieListScreen();
+        break;
+      case 2:
+        nextScreen = const MovieBoardScreen();
+        break;
+      case 3:
+        nextScreen = const DomesticMovieBoardScreen();
+        break;
+      default:
+        return;
     }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => nextScreen),
+    );
   }
 
   List<PostDto> _getSortedPosts(List<PostDto> posts) {
@@ -85,13 +85,22 @@ class _FreeBoardScreen extends State<FreeBoardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text("자유게시판", style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "자유게시판",
+          style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // 🔹 뒤로가기 → 홈으로 이동, 검은 화면 방지
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const MovieHomeScreen()),
+            );
+          },
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

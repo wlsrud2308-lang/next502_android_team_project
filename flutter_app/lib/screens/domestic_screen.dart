@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/models/post_model.dart';
 import 'package:flutter_app/screens/free_screen.dart';
 import 'package:flutter_app/screens/global_post_list.dart';
+import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/post_write_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
@@ -13,10 +14,10 @@ class DomesticMovieBoardScreen extends StatefulWidget {
   const DomesticMovieBoardScreen({super.key});
 
   @override
-  State<DomesticMovieBoardScreen> createState() => _DomesticMovieBoardScreen();
+  State<DomesticMovieBoardScreen> createState() => _DomesticMovieBoardScreenState();
 }
 
-class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
+class _DomesticMovieBoardScreenState extends State<DomesticMovieBoardScreen> {
   final PostService _postService = PostServiceImpl();
   late Future<List<PostDto>> _postsFuture;
   String _currentSort = "최신순";
@@ -33,37 +34,33 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
     });
   }
 
+  // 🔹 BottomNavBar 클릭 처리 (홈 이동 시 스택 제거)
   void _onBottomNavTap(int index) {
+    if (index == 3) return; // 현재 화면이면 패스
 
-    if (index == 3) return;
+    Widget nextScreen;
 
-    if (index == 0) {
-
-      Navigator.pop(context, 0);
-    } else {
-      Widget nextScreen;
-      switch (index) {
-        case 1:
-          nextScreen = const MovieListScreen();
-          break;
-        case 4:
-          nextScreen = const FreeBoardScreen();
-          break;
-        case 2:
-          nextScreen = const MovieBoardScreen();
-          break;
-        default:
-          return;
-      }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => nextScreen),
-      ).then((value) {
-
-        if (value != null) Navigator.pop(context, value);
-      });
+    switch (index) {
+      case 0:
+        nextScreen = const MovieHomeScreen();
+        break;
+      case 1:
+        nextScreen = const MovieListScreen();
+        break;
+      case 2:
+        nextScreen = const MovieBoardScreen();
+        break;
+      case 4:
+        nextScreen = const FreeBoardScreen();
+        break;
+      default:
+        return;
     }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => nextScreen),
+    );
   }
 
   List<PostDto> _getSortedPosts(List<PostDto> posts) {
@@ -88,17 +85,26 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text("국내영화", style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "국내영화",
+          style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // 🔹 뒤로가기 → 홈으로 이동, 검은 화면 방지
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const MovieHomeScreen()),
+            );
+          },
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: Colors.black12, height: 1),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: Colors.black12),
         ),
       ),
       body: Column(
@@ -143,7 +149,7 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
         onPressed: () async {
           final bool? isPosted = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const PostWriteScreen()),
+            MaterialPageRoute(builder: (_) => const PostWriteScreen()),
           );
 
           if (isPosted == true) {
@@ -201,7 +207,7 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DetailScreen(postId: post.postId),
+            builder: (_) => DetailScreen(postId: post.postId),
           ),
         );
       },
@@ -217,10 +223,10 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
               child: Column(
                 children: [
                   Text(
-                      post.createdAt.length >= 16
-                          ? post.createdAt.substring(11, 16)
-                          : post.createdAt,
-                      style: const TextStyle(color: Colors.black26, fontSize: 11)
+                    post.createdAt.length >= 16
+                        ? post.createdAt.substring(11, 16)
+                        : post.createdAt,
+                    style: const TextStyle(color: Colors.black26, fontSize: 11),
                   ),
                   const SizedBox(height: 4),
                   if (post.likeCnt > 0)
@@ -230,8 +236,10 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
                         color: Colors.orange.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text("${post.likeCnt}",
-                          style: const TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        "${post.likeCnt}",
+                        style: const TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
                     ),
                 ],
               ),
@@ -260,9 +268,9 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
                                   child: Text(
                                     post.category ?? "일반",
                                     style: const TextStyle(
-                                        color: Colors.black54,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold
+                                      color: Colors.black54,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
@@ -270,19 +278,19 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
                               TextSpan(
                                 text: post.title,
                                 style: const TextStyle(
-                                    color: Color(0xFF333333),
-                                    fontSize: 14,
-                                    height: 1.3,
-                                    fontWeight: FontWeight.w500
+                                  color: Color(0xFF333333),
+                                  fontSize: 14,
+                                  height: 1.3,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                               if (post.commentCnt > 0)
                                 TextSpan(
                                   text: "  ${post.commentCnt}",
                                   style: const TextStyle(
-                                      color: Colors.blueAccent,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold
+                                    color: Colors.blueAccent,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                             ],

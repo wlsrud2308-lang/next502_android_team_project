@@ -21,12 +21,10 @@ class MovieListScreen extends StatefulWidget {
 class _MovieListScreenState extends State<MovieListScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Movie> _movies = [];
-  String _selectedFilter = 'all'; // all, popular, topRated, nowPlaying
+  String _selectedFilter = 'all';
   bool _isLoading = true;
-
   final Map<int, bool> _favoriteMap = {};
-
-  int _selectedIndex = 1; // ⭐ 영화정보 탭
+  int _selectedIndex = 1; // 영화정보 탭
 
   @override
   void initState() {
@@ -35,25 +33,21 @@ class _MovieListScreenState extends State<MovieListScreen> {
   }
 
   Future<void> _loadMovies() async {
+    setState(() => _isLoading = true);
     try {
       final movies = await MovieService.fetchMoviesByCategory(_selectedFilter);
 
-      //  로그인 상태라면 서버에서 내 북마크 ID 리스트 가져오기
       if (sessionUserNum != null) {
         try {
           final dio = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:8080'));
-          // 서버의 GET /bookmark/{userNum} 호출
           final response = await dio.get('/bookmark/$sessionUserNum');
 
           if (response.statusCode == 200) {
             List<dynamic> bookmarkedIds = response.data;
-
-            setState(() {
-              _favoriteMap.clear();
-              for (var id in bookmarkedIds) {
-                _favoriteMap[id] = true;
-              }
-            });
+            _favoriteMap.clear();
+            for (var id in bookmarkedIds) {
+              _favoriteMap[id] = true;
+            }
           }
         } catch (e) {
           print("북마크 목록 로드 중 오류: $e");
@@ -74,12 +68,10 @@ class _MovieListScreenState extends State<MovieListScreen> {
     return _movies.where((m) => m.title.toLowerCase().contains(query)).toList();
   }
 
-  // ⭐ 네브바 클릭 처리
   void _onNavTap(int index) {
     if (index == _selectedIndex) return;
 
     Widget nextScreen;
-
     switch (index) {
       case 0:
         nextScreen = const MovieHomeScreen();
@@ -99,11 +91,15 @@ class _MovieListScreenState extends State<MovieListScreen> {
         return;
     }
 
-    Navigator.pushAndRemoveUntil(
+    // 🔹 pushReplacement 사용: 이전 화면 제거 → 뒤로가기 시 검은 화면 방지
+    Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => nextScreen),
-          (route) => false,
+      MaterialPageRoute(builder: (_) => nextScreen),
     );
+
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
@@ -118,6 +114,16 @@ class _MovieListScreenState extends State<MovieListScreen> {
           style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          onPressed: () {
+            // 🔹 뒤로가기 시 홈으로 이동
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const MovieHomeScreen()),
+            );
+          },
+        ),
       ),
       body: Column(
         children: [
@@ -130,8 +136,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
           ),
         ],
       ),
-
-      // ⭐ 여기 추가된 부분
       bottomNavigationBar: BottomNavBar(
         selectedIndex: _selectedIndex,
         onTap: _onNavTap,
