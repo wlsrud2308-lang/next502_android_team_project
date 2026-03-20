@@ -18,7 +18,7 @@ class LoginPage extends StatelessWidget {
               fontWeight: FontWeight.bold
           ),
         ),
-        backgroundColor: Colors.indigoAccent, // 남색 계열 배경
+        backgroundColor: Colors.deepPurple,
         centerTitle: true, // 제목 가운데 정렬
         elevation: 0, // 상단바 그림자 제거 (깔끔하게)
       ),

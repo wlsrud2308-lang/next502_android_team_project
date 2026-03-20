@@ -15,7 +15,7 @@ void showToast(String msg) {
     msg: msg,
     toastLength: Toast.LENGTH_SHORT,
     gravity: ToastGravity.CENTER,
-    backgroundColor: Colors.indigoAccent,
+    backgroundColor: Colors.purpleAccent,
     textColor: Colors.white,
     fontSize: 16.0,
   );
@@ -194,7 +194,7 @@ class _AuthScreen extends State<AuthScreen> {
       Text(
         isSignIn ? '로그인' : '회원가입',
         style: const TextStyle(
-            color: Colors.indigoAccent, fontWeight: FontWeight.bold, fontSize: 24),
+            color: Colors.deepPurple, fontWeight: FontWeight.bold, fontSize: 24),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 16),
