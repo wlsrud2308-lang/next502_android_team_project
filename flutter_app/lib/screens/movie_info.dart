@@ -4,9 +4,12 @@ import 'package:flutter_app/screens/movie_detail.dart';
 import 'package:flutter_app/screens/global_post_list.dart';
 import 'package:flutter_app/screens/domestic_screen.dart';
 import 'package:flutter_app/screens/free_screen.dart';
+import 'package:flutter_app/widgets/BookmarkButton.dart';
 import '../models/movie.dart';
 import '../service/movie_service.dart';
 import '../widgets/bottom_nav_bar.dart';
+import 'package:flutter_app/main.dart';
+import 'package:dio/dio.dart';
 
 class MovieListScreen extends StatefulWidget {
   const MovieListScreen({super.key});
@@ -32,9 +35,31 @@ class _MovieListScreenState extends State<MovieListScreen> {
   }
 
   Future<void> _loadMovies() async {
-    setState(() => _isLoading = true);
     try {
       final movies = await MovieService.fetchMoviesByCategory(_selectedFilter);
+
+      //  로그인 상태라면 서버에서 내 북마크 ID 리스트 가져오기
+      if (sessionUserNum != null) {
+        try {
+          final dio = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:8080'));
+          // 서버의 GET /bookmark/{userNum} 호출
+          final response = await dio.get('/bookmark/$sessionUserNum');
+
+          if (response.statusCode == 200) {
+            List<dynamic> bookmarkedIds = response.data;
+
+            setState(() {
+              _favoriteMap.clear();
+              for (var id in bookmarkedIds) {
+                _favoriteMap[id] = true;
+              }
+            });
+          }
+        } catch (e) {
+          print("북마크 목록 로드 중 오류: $e");
+        }
+      }
+
       setState(() => _movies = movies);
     } catch (e) {
       print('영화 데이터를 불러오는데 실패했습니다: $e');
@@ -222,17 +247,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
         ),
         child: Row(
           children: [
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _favoriteMap[movie.id] = !isFav;
-                });
-              },
-              child: Icon(
-                isFav ? Icons.star : Icons.star_border,
-                color: isFav ? Colors.orangeAccent : Colors.black26,
-                size: 22,
-              ),
+            BookmarkButton(
+              movieId: movie.id,
+              initialIsFavorite: isFav,
             ),
             const SizedBox(width: 8),
             Container(
