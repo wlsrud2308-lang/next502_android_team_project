@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -18,10 +19,38 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   late Future<Map<String, dynamic>> movieFuture;
   final Dio _dio = Dio(BaseOptions(baseUrl: 'http://10.0.2.2:8080'));
 
+  // 1. 로그인한 사용자의 user_num을 저장할 변수
+  int? _myUserNum;
+
   @override
   void initState() {
     super.initState();
     movieFuture = fetchMovie(widget.movieId);
+    _loadUserInfo(); // 2. 페이지 시작 시 유저 정보 불러오기
+  }
+
+  // 3. 서버에서 내 정보를 가져오는 함수 추가
+  Future<void> _loadUserInfo() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final idToken = await user.getIdToken();
+        // 서버의 내 정보 조회 API (경로를 서버 설정에 맞춰 확인하세요)
+        final res = await _dio.get(
+          "/users/me",
+          options: Options(headers: {"Authorization": "Bearer $idToken"}),
+        );
+
+        if (mounted) {
+          setState(() {
+            // 서버 응답 데이터에서 user_num 추출
+            _myUserNum = res.data['user_num'];
+          });
+        }
+      } catch (e) {
+        debugPrint("유저 정보 로드 실패: $e");
+      }
+    }
   }
 
   Future<Map<String, dynamic>> fetchMovie(int movieId) async {
@@ -288,12 +317,28 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 _buildDirector(movie),
                 const SizedBox(height: 16),
                 // 리뷰 작성
-                ReviewInput(
-                  movieId: widget.movieId,
-                  onReviewSubmitted: refreshReviews,
-                ),
+                if (_myUserNum != null)
+                  ReviewInput(
+                    userNum: _myUserNum!,
+                    movieId: widget.movieId,
+                    onReviewSubmitted: refreshReviews,
+                  )
+                else
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text(
+                        "로그인 정보를 확인 중이거나 로그인이 필요합니다.",
+                        style: TextStyle(color: Colors.white38),
+                      ),
+                    ),
+                  ),
                 // 리뷰 리스트
-                ReviewList(movieId: widget.movieId),
+                ReviewList(
+                  key: ValueKey("review_list_${DateTime.now().millisecondsSinceEpoch}"),
+                  movieId: widget.movieId,
+                ),
+                const SizedBox(height: 32),
               ],
             ),
           ),
