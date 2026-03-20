@@ -73,7 +73,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.deepPurple,
         leading: const Icon(Icons.movie_filter, color: Colors.purpleAccent),
-        title: const Text("영화 앱", style: TextStyle(color: Colors.white)),
+        title: const Text("영화 커뮤니티", style: TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white30),
