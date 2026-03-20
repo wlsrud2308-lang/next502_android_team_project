@@ -25,4 +25,17 @@ public class ReviewController {
     public ReviewDTO createReview(@RequestBody ReviewDTO reviewDTO) {
         return reviewService.createReview(reviewDTO);
     }
+
+    @PutMapping("/{reviewId}")
+    public void updateReview(@PathVariable int reviewId, @RequestBody ReviewDTO reviewDTO) {
+        // 경로에 있는 reviewId를 DTO에 설정
+        reviewDTO.setReviewId(reviewId);
+        reviewService.updateReview(reviewDTO);
+    }
+
+    // 리뷰 삭제 (Flutter의 dio.delete 에 대응)
+    @DeleteMapping("/{reviewId}")
+    public void deleteReview(@PathVariable int reviewId) {
+        reviewService.deleteReview(reviewId);
+    }
 }

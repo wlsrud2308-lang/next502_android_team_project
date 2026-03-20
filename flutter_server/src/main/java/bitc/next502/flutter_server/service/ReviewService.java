@@ -8,4 +8,8 @@ public interface ReviewService {
     List<ReviewDTO> getReviewsByMovie(int movieId);
 
     ReviewDTO createReview(ReviewDTO reviewDTO);
+
+    void updateReview(ReviewDTO reviewDTO);
+
+    void deleteReview(int reviewId);
 }
