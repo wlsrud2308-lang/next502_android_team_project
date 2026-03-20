@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/movie_detail.dart';
+import 'package:flutter_app/screens/global_post_list.dart';
+import 'package:flutter_app/screens/domestic_screen.dart';
+import 'package:flutter_app/screens/free_screen.dart';
 import '../models/movie.dart';
 import '../service/movie_service.dart';
+import '../widgets/bottom_nav_bar.dart';
 
 class MovieListScreen extends StatefulWidget {
   const MovieListScreen({super.key});
@@ -16,8 +21,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
   String _selectedFilter = 'all'; // all, popular, topRated, nowPlaying
   bool _isLoading = true;
 
-  // UI에서 임시 찜 상태 관리
   final Map<int, bool> _favoriteMap = {};
+
+  int _selectedIndex = 1; // ⭐ 영화정보 탭
 
   @override
   void initState() {
@@ -43,12 +49,44 @@ class _MovieListScreenState extends State<MovieListScreen> {
     return _movies.where((m) => m.title.toLowerCase().contains(query)).toList();
   }
 
+  // ⭐ 네브바 클릭 처리
+  void _onNavTap(int index) {
+    if (index == _selectedIndex) return;
+
+    Widget nextScreen;
+
+    switch (index) {
+      case 0:
+        nextScreen = const MovieHomeScreen();
+        break;
+      case 1:
+        return;
+      case 2:
+        nextScreen = const MovieBoardScreen();
+        break;
+      case 3:
+        nextScreen = const DomesticMovieBoardScreen();
+        break;
+      case 4:
+        nextScreen = const FreeBoardScreen();
+        break;
+      default:
+        return;
+    }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => nextScreen),
+          (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // 흰색 배경
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, // AppBar 배경 흰색
+        backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
           "영화 정보",
@@ -67,6 +105,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
           ),
         ],
       ),
+
+      // ⭐ 여기 추가된 부분
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedIndex,
+        onTap: _onNavTap,
+      ),
     );
   }
 
@@ -76,9 +120,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
       child: Container(
         height: 45,
         decoration: BoxDecoration(
-          color: Colors.white70, // 밝은 회색 배경
+          color: Colors.white70,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.withOpacity(0.2)), // 연한 테두리
+          border: Border.all(color: Colors.grey.withOpacity(0.2)),
         ),
         child: TextField(
           controller: _searchController,
@@ -110,9 +154,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
         height: 45,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white70, // 밝은 회색 배경
+          color: Colors.white70,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.withOpacity(0.2)), // 연한 테두리
+          border: Border.all(color: Colors.grey.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -124,7 +168,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
             DropdownButton<String>(
               value: _selectedFilter,
               underline: const SizedBox(),
-              dropdownColor: Colors.white, // 드롭다운 배경 흰색
+              dropdownColor: Colors.white,
               style: const TextStyle(color: Colors.black),
               iconEnabledColor: Colors.black54,
               items: const [
@@ -164,7 +208,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
     return GestureDetector(
       onTap: () {
-        // 영화 클릭 → 상세 페이지 이동
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -179,7 +222,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
         ),
         child: Row(
           children: [
-            // ⭐ 찜 버튼
             GestureDetector(
               onTap: () {
                 setState(() {
@@ -193,8 +235,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
               ),
             ),
             const SizedBox(width: 8),
-
-            // 🎬 포스터
             Container(
               width: 44,
               height: 60,
@@ -215,8 +255,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
                   : const Icon(Icons.movie, color: Colors.black38),
             ),
             const SizedBox(width: 12),
-
-            // 제목 + 개봉일
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,8 +271,6 @@ class _MovieListScreenState extends State<MovieListScreen> {
                 ],
               ),
             ),
-
-            // 평점
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [

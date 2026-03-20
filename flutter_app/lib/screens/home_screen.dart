@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_app/models/post_model.dart';
+import 'package:flutter_app/screens/domestic_screen.dart';
 import 'package:flutter_app/screens/edit_screen.dart';
+import 'package:flutter_app/screens/free_screen.dart';
+import 'package:flutter_app/screens/global_post_list.dart';
 import 'package:flutter_app/screens/login_screen.dart';
-import 'package:flutter_app/screens/movie_info.dart';
 import 'package:flutter_app/screens/search_screen.dart';
+import 'package:flutter_app/screens/movie_info.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
-import 'package:flutter_app/models/post_model.dart';
 import 'package:flutter_app/widgets/bottom_nav_bar.dart';
 import 'package:flutter_app/widgets/popular_posts.dart';
 
-import 'global_post_list.dart';
-
+// RouteObserver 필요
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -20,91 +23,77 @@ class MovieHomeScreen extends StatefulWidget {
   State<MovieHomeScreen> createState() => _MovieHomeScreenState();
 }
 
-class _MovieHomeScreenState extends State<MovieHomeScreen> {
-  int _selectedCategoryIndex = 0;
-  int _selectedBottomIndex = 0; // ← 하단 네비바 선택 인덱스
-  final List<String> _categories = [
-    "인기글",
-    "영화 정보",
-    "해외영화",
-    "국내영화",
-    "자유게시판",
-  ];
-
-  late Future<List<PostDto>> _posts;
+// RouteAware로 다른 화면에서 돌아올 때 감지
+class _MovieHomeScreenState extends State<MovieHomeScreen> with RouteAware {
+  int _selectedBottomIndex = 0; // 하단 네비바 선택 인덱스
   final PostService _postService = PostServiceImpl();
+  late Future<List<PostDto>> _posts;
 
   @override
   void initState() {
     super.initState();
-    _loadPosts();
+    _posts = _postService.getPopularPosts(); // 초기 인기글
   }
 
-  void _loadPosts() {
-    if (_selectedCategoryIndex == 0) {
-      _posts = fetchPopularPosts();
-    } else {
-      String boardType = _categories[_selectedCategoryIndex] == '자유게시판'
-          ? '자유'
-          : _categories[_selectedCategoryIndex].replaceAll('영화', '');
-      _posts = fetchPosts(boardType);
-    }
+  // RouteAware 등록
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
   }
 
-  Future<List<PostDto>> fetchPosts(String boardType) async {
-    try {
-      var posts = await _postService.getPostsByBoard(boardType);
-      return posts;
-    } catch (e) {
-      return [];
-    }
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
   }
 
-  Future<List<PostDto>> fetchPopularPosts() async {
-    try {
-      var posts = await _postService.getPopularPosts();
-      return posts;
-    } catch (e) {
-      return [];
-    }
-  }
-
-  // 🚀 카테고리 클릭 핸들러 수정
-  void _changeCategory(int index) {
-    String categoryName = _categories[index];
-
-    if (categoryName == "영화 정보") {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const MovieListScreen()),
-      );
-    }
-    else if (categoryName == "해외영화") {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const MovieBoardScreen()),
-      );
-
-    }
-
+  // 다른 화면에서 돌아왔을 때
+  @override
+  void didPopNext() {
     setState(() {
-      _selectedCategoryIndex = index;
-      if (categoryName == "인기글") {
-        _posts = fetchPopularPosts();
-      } else {
-        String boardType = categoryName == '자유게시판'
-            ? '자유'
-            : categoryName.replaceAll('영화', '');
-        _posts = fetchPosts(boardType);
-      }
+      _posts = _postService.getPopularPosts(); // 인기글 새로고침
+      _selectedBottomIndex = 0;
     });
   }
 
   void _onBottomNavTap(int index) {
-    setState(() {
-      _selectedBottomIndex = index;
-      _changeCategory(index); // 하단 네비바와 기존 카테고리 연동
-    });
+    if (index == _selectedBottomIndex) return;
+
+    if (index == 0) {
+      // 홈 버튼 클릭 → 인기글 새로고침
+      setState(() {
+        _posts = _postService.getPopularPosts();
+        _selectedBottomIndex = 0;
+      });
+    } else {
+      Widget nextScreen;
+      switch (index) {
+        case 1:
+          nextScreen = const MovieListScreen(); // 영화 정보
+          break;
+        case 2:
+          nextScreen = const MovieBoardScreen(); // 해외 영화
+          break;
+        case 3:
+          nextScreen = const DomesticMovieBoardScreen(); // 국내 영화
+          break;
+        case 4:
+          nextScreen = const FreeBoardScreen(); // 자유게시판
+          break;
+        default:
+          return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => nextScreen),
+      );
+
+      setState(() {
+        _selectedBottomIndex = index;
+      });
+    }
   }
 
   @override
@@ -119,7 +108,10 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white30),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const SearchScreen()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
             },
           ),
           IconButton(
@@ -127,9 +119,18 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             onPressed: () {
               User? user = FirebaseAuth.instance.currentUser;
               if (user != null) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const EditProfilePage()),
+                );
               } else {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage(title: "로그인")));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                      const LoginPage(title: "로그인")),
+                );
               }
             },
           ),
@@ -138,8 +139,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       body: Column(
         children: [
           _buildBoxOfficeBar(),
-          _buildBarCategoryNav(),
-          Expanded(child: _buildSelectedCategoryContent()),
+          Expanded(child: PopularPosts()), // 항상 인기글만 표시
         ],
       ),
       bottomNavigationBar: BottomNavBar(
@@ -168,120 +168,24 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   Widget _boxOfficeTile(String title, String rate) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.white.withOpacity(0.05)))),
+      decoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(color: Colors.white.withOpacity(0.05)),
+        ),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(rate, style: const TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBarCategoryNav() {
-    return Container(
-      height: 50,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
-      ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        itemBuilder: (context, index) {
-          bool isSelected = _selectedCategoryIndex == index;
-          return Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _changeCategory(index),
-              child: Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: isSelected ? Colors.purpleAccent : Colors.transparent, width: 3)),
-                ),
-                child: Text(
-                  _categories[index],
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white38,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildSelectedCategoryContent() {
-    if (_selectedCategoryIndex == 0) {
-      return const PopularPosts();
-    } else {
-      return _buildPostList();
-    }
-  }
-
-  Widget _buildPostList() {
-    return FutureBuilder<List<PostDto>>(
-      key: ValueKey<String>(_categories[_selectedCategoryIndex]),
-      future: _posts,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.purpleAccent));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('게시글이 없습니다.', style: TextStyle(color: Colors.white54)));
-        } else {
-          return ListView.builder(
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              var post = snapshot.data![index];
-              return _buildPostItem(post);
-            },
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildPostItem(PostDto post) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05)))),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 35,
-            child: Text(
-              post.postId.toString(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orangeAccent),
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(post.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(post.category ?? '기타', style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 11)),
-                    const SizedBox(width: 10),
-                    Text(post.authorName, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                    const SizedBox(width: 10),
-                    Text(post.createdAt, style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text("💬 ${post.commentCnt}", style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white)),
+          Text(rate,
+              style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
     );
