@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/models/movie.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/models/post_model.dart';
+import 'package:flutter_app/screens/detail_screen.dart';
+import 'package:flutter_app/screens/movie_detail.dart'; // MovieDetailScreen import
 import 'package:dio/dio.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -27,7 +29,6 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-  // 🔹 서버에서 영화 + 게시글 통합 검색
   Future<SearchResult> _fetchSearchResults(String query) async {
     final response =
     await dio.get('http://10.0.2.2:8080/flutter/search', queryParameters: {
@@ -44,9 +45,9 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // 전체 배경 흰색
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple, // 앱바 원본 유지
+        backgroundColor: Colors.deepPurple,
         title: TextField(
           controller: _controller,
           autofocus: true,
@@ -105,11 +106,11 @@ class _SearchScreenState extends State<SearchScreen> {
             return ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                // 🔹 영화 섹션
+                // 영화 섹션
                 if (searchResult.movies.isNotEmpty) ...[
                   const Padding(
-                    padding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
                     child: Text(
                       "영화 검색 결과",
                       style: TextStyle(
@@ -121,11 +122,11 @@ class _SearchScreenState extends State<SearchScreen> {
                       .toList(),
                 ],
 
-                // 🔹 게시글 섹션
+                // 게시글 섹션
                 if (searchResult.posts.isNotEmpty) ...[
                   const Padding(
-                    padding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
                     child: Text(
                       "관련 게시글",
                       style: TextStyle(
@@ -144,131 +145,151 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // 🔹 영화 카드 UI
+  // 영화 카드 UI (클릭 시 MovieDetailScreen 이동)
   Widget _buildMovieItem(Movie movie) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: movie.posterPath != null && movie.posterPath!.isNotEmpty
-                ? Image.network(
-              "https://image.tmdb.org/t/p/w500${movie.posterPath!}",
-              width: 60,
-              height: 90,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MovieDetailScreen(movieId: movie.id),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: movie.posterPath != null && movie.posterPath!.isNotEmpty
+                  ? Image.network(
+                "https://image.tmdb.org/t/p/w500${movie.posterPath!}",
                 width: 60,
                 height: 90,
-                color: Colors.grey.shade200,
-              ),
-            )
-                : Container(width: 60, height: 90, color: Colors.grey.shade200),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(movie.title,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                Text(
-                  movie.releaseDate ?? "개봉일 없음",
-                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 60,
+                  height: 90,
+                  color: Colors.grey.shade200,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  movie.overview,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.black87, fontSize: 13),
-                ),
-              ],
+              )
+                  : Container(width: 60, height: 90, color: Colors.grey.shade200),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(movie.title,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Text(
+                    movie.releaseDate ?? "개봉일 없음",
+                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    movie.overview,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.black87, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // 🔹 게시글 UI
+  // 게시글 UI (클릭 시 DetailScreen 이동)
   Widget _buildPostItem(PostDto post) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 35,
-            child: Text(
-              post.postId.toString(),
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orangeAccent),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailScreen(postId: post.postId),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 35,
+              child: Text(
+                post.postId.toString(),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orangeAccent),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(post.title,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87),
-                    maxLines: 2),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Text(
-                      post.category ?? '기타',
-                      style:
-                      const TextStyle(color: Colors.blueAccent, fontSize: 11),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      post.authorName ?? '익명',
-                      style: const TextStyle(color: Colors.black54, fontSize: 11),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      post.createdAt ?? '',
-                      style: const TextStyle(color: Colors.black38, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(post.title,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87),
+                      maxLines: 2),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                        post.category ?? '기타',
+                        style:
+                        const TextStyle(color: Colors.blueAccent, fontSize: 11),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        post.authorName ?? '익명',
+                        style: const TextStyle(color: Colors.black54, fontSize: 11),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        post.createdAt ?? '',
+                        style: const TextStyle(color: Colors.black38, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            "💬 ${post.commentCnt}",
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Text(
+              "💬 ${post.commentCnt}",
+              style: const TextStyle(color: Colors.black54, fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// 🔹 통합 검색 결과 DTO
+// 통합 검색 결과 DTO
 class SearchResult {
   final List<Movie> movies;
   final List<PostDto> posts;
