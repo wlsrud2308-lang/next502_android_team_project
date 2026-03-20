@@ -1,11 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_app/screens/detail_screen.dart';
 import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/login_screen.dart';
-import 'package:flutter_app/screens/movie_info.dart';
-import 'package:flutter_app/widgets/movie_list_page.dart';
 import 'firebase_options.dart';
 
 int? sessionUserNum;
@@ -41,14 +38,8 @@ class MyApp extends StatelessWidget {
             );
           }
 
-          // 로그인 정보(snapshot.hasData)가 있으면 영화 리스트 화면으로 바로 이동
-          // if (snapshot.hasData) {
-          //   return const DetailScreen(postId: 123,);
-          // }
-
           // 무비 디테일 스크린 확인용
           if (snapshot.hasData) {
-            // return const MovieHomeScreen();
             return const MovieHomeScreen();
           }
 
@@ -58,47 +49,4 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
-}
-
-class MainMapScreen extends StatelessWidget {
-  const MainMapScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("부산 빈티지 맵"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.sync),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => MovieHomeScreen()),
-              );
-            },
-          ),
-
-          // ✅ 영화 리스트 보기
-          IconButton(
-            icon: const Icon(Icons.movie),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MovieListScreen()),
-              );
-            },
-          ),
-
-          // 로그아웃
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => FirebaseAuth.instance.signOut(),
-          )
-        ],
-      ),
-      body: const Center(child: Text("여기에 지도를 띄울 예정입니다!")),
-    );
-  }
-
 }
