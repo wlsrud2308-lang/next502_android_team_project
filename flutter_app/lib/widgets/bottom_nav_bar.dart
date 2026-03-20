@@ -15,7 +15,7 @@ class BottomNavBar extends StatelessWidget {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed, // 5개 이상 아이템일 때 필요
       backgroundColor: Colors.white,
-      selectedItemColor: Colors.purpleAccent,
+      selectedItemColor: Colors.deepPurpleAccent,
       unselectedItemColor: Colors.black,
       currentIndex: selectedIndex,
       onTap: onTap,
