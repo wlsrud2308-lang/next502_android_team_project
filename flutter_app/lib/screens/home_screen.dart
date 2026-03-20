@@ -7,6 +7,7 @@ import 'package:flutter_app/screens/search_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/models/post_model.dart';
+import 'package:flutter_app/widgets/bottom_nav_bar.dart';
 import 'package:flutter_app/widgets/popular_posts_widget.dart';
 
 import 'global_post_list.dart';
@@ -21,6 +22,7 @@ class MovieHomeScreen extends StatefulWidget {
 
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
   int _selectedCategoryIndex = 0;
+  int _selectedBottomIndex = 0; // ← 하단 네비바 선택 인덱스
   final List<String> _categories = [
     "인기글",
     "영화 정보",
@@ -98,6 +100,13 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     });
   }
 
+  void _onBottomNavTap(int index) {
+    setState(() {
+      _selectedBottomIndex = index;
+      _changeCategory(index); // 하단 네비바와 기존 카테고리 연동
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,6 +141,10 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           _buildBarCategoryNav(),
           Expanded(child: _buildSelectedCategoryContent()),
         ],
+      ),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedBottomIndex,
+        onTap: _onBottomNavTap,
       ),
     );
   }
