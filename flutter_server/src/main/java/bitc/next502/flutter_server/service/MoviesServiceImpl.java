@@ -177,4 +177,13 @@ public class MoviesServiceImpl implements MoviesService {
       System.out.println("Crew 저장 실패: " + movieId + " / " + e.getMessage());
     }
   }
+
+  @Override
+  public List<MoviesDTO> searchMovies(String query) {
+    if (query == null || query.isEmpty()) return List.of();
+
+    // 제목 또는 원제 기반 검색
+    return moviesMapper.searchMoviesByTitleOrOriginalTitle(query);
+  }
+
 }
