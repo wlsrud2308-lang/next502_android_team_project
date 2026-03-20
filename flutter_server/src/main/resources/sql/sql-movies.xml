@@ -169,4 +169,21 @@
         WHERE movie_id = #{movieId}
     </select>
 
+    <select id="searchMoviesByTitleOrOriginalTitle" resultType="bitc.next502.flutter_server.dto.MoviesDTO">
+        SELECT
+            id,
+            title,
+            original_title AS originalTitle,
+            poster_path AS posterPath,
+            backdrop_path AS backdropPath,
+            overview,
+            release_date AS releaseDate,
+            vote_average AS voteAverage,
+            vote_count AS voteCount,
+            popularity
+        FROM movies
+        WHERE title LIKE CONCAT('%', #{query}, '%')
+           OR original_title LIKE CONCAT('%', #{query}, '%')
+    </select>
+
 </mapper>

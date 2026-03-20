@@ -29,4 +29,6 @@ public interface MoviesMapper {
   void insertCrewBatch(Long movieId, List<CrewDTO> crewList);
 
   void deleteMovieById(Long movieId);
+
+  List<MoviesDTO> searchMoviesByTitleOrOriginalTitle(String query);
 }
