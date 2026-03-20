@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/models/post_model.dart';
+import 'package:flutter_app/screens/detail_screen.dart'; // 상세페이지 import
 
 class PopularPosts extends StatefulWidget {
   const PopularPosts({super.key});
@@ -63,7 +64,7 @@ class _PopularPostsState extends State<PopularPosts> {
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 16, // 글자 키움
+                fontSize: 16,
               ),
             ),
           ),
@@ -84,11 +85,14 @@ class _PopularPostsState extends State<PopularPosts> {
                   _posts = _posts.then((list) {
                     List<PostDto> sorted = List.from(list);
                     if (_selectedSort == '조회수') {
-                      sorted.sort((a, b) => (b.viewCnt ?? 0).compareTo(a.viewCnt ?? 0));
+                      sorted.sort((a, b) =>
+                          (b.viewCnt ?? 0).compareTo(a.viewCnt ?? 0));
                     } else if (_selectedSort == '추천수') {
-                      sorted.sort((a, b) => (b.likeCnt ?? 0).compareTo(a.likeCnt ?? 0));
+                      sorted.sort((a, b) =>
+                          (b.likeCnt ?? 0).compareTo(a.likeCnt ?? 0));
                     } else if (_selectedSort == '댓글수') {
-                      sorted.sort((a, b) => (b.commentCnt ?? 0).compareTo(a.commentCnt ?? 0));
+                      sorted.sort((a, b) =>
+                          (b.commentCnt ?? 0).compareTo(a.commentCnt ?? 0));
                     }
                     return sorted;
                   });
@@ -125,82 +129,94 @@ class _PopularPostsState extends State<PopularPosts> {
     );
   }
 
+  // 각 게시글 항목
   Widget _buildPostItem(PostDto post) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.withOpacity(0.1)),
+    return InkWell(
+      onTap: () {
+        // 클릭 시 DetailScreen으로 이동
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailScreen(postId: post.postId),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.withOpacity(0.1)),
+          ),
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 35,
-            child: Text(
-              post.postId.toString(),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.orange,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 35,
+              child: Text(
+                post.postId.toString(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  post.title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
                   ),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Text(
-                      post.category ?? '기타',
-                      style: const TextStyle(
-                        color: Colors.blueAccent,
-                        fontSize: 11,
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                        post.category ?? '기타',
+                        style: const TextStyle(
+                          color: Colors.blueAccent,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      post.authorName,
-                      style: const TextStyle(
-                        color: Colors.black45,
-                        fontSize: 11,
+                      const SizedBox(width: 8),
+                      Text(
+                        post.authorName,
+                        style: const TextStyle(
+                          color: Colors.black45,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      post.createdAt,
-                      style: const TextStyle(
-                        color: Colors.black38,
-                        fontSize: 11,
+                      const SizedBox(width: 8),
+                      Text(
+                        post.createdAt,
+                        style: const TextStyle(
+                          color: Colors.black38,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            "💬 ${post.commentCnt}",
-            style: const TextStyle(
-              color: Colors.black45,
-              fontSize: 12,
+            const SizedBox(width: 10),
+            Text(
+              "💬 ${post.commentCnt}",
+              style: const TextStyle(
+                color: Colors.black45,
+                fontSize: 12,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
