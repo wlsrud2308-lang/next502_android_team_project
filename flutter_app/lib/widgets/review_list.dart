@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/review_model.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:flutter_app/main.dart';
 
 class ReviewList extends StatefulWidget {
   final int movieId;
@@ -21,9 +22,6 @@ class _ReviewListState extends State<ReviewList> {
   );
 
   late Future<List<Review>> _reviewsFuture;
-
-  // 테스트용
-  final int myUserNum = 1;
 
   @override
   void initState() {
@@ -74,6 +72,7 @@ class _ReviewListState extends State<ReviewList> {
       await _dio.put(
         "/reviews/$reviewId",
         data: {
+          "userNum": sessionUserNum,
           "rating": rating,
           "content": content,
         },
@@ -287,17 +286,17 @@ class _ReviewListState extends State<ReviewList> {
                             fontSize: 10,
                           ),
                         ),
-                        if (r.userNum == myUserNum)
+                        if (sessionUserNum != null && r.userNum == sessionUserNum)
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               TextButton(
                                 onPressed: () => _showEditDialog(r),
-                                child: const Text("수정"),
+                                child: const Text("수정", style: TextStyle(color: Colors.blue)),
                               ),
                               TextButton(
                                 onPressed: () => _deleteReview(r.reviewId),
-                                child: const Text("삭제"),
+                                child: const Text("삭제", style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           ),

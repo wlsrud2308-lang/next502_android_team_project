@@ -27,4 +27,14 @@ public class ReviewServiceImpl implements ReviewService {
         reviewMapper.insertReview(reviewDTO);
         return reviewDTO;
     }
+
+    @Override
+    public void updateReview(ReviewDTO reviewDTO) {
+        reviewMapper.updateReview(reviewDTO);
+    }
+
+    @Override
+    public void deleteReview(int reviewId) {
+        reviewMapper.deleteReview(reviewId);
+    }
 }
