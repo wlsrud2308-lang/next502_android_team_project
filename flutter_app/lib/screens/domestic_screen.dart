@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/models/post_model.dart';
 import 'package:flutter_app/screens/free_screen.dart';
 import 'package:flutter_app/screens/global_post_list.dart';
+import 'package:flutter_app/screens/post_write_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/widgets/bottom_nav_bar.dart';
@@ -139,7 +140,16 @@ class _DomesticMovieBoardScreen extends State<DomesticMovieBoardScreen> {
         onTap: _onBottomNavTap,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => print("글쓰기"),
+        onPressed: () async {
+          final bool? isPosted = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PostWriteScreen()),
+          );
+
+          if (isPosted == true) {
+            _loadPosts();
+          }
+        },
         backgroundColor: const Color(0xFF2C2C2C),
         mini: true,
         child: const Icon(Icons.edit, color: Colors.white, size: 20),

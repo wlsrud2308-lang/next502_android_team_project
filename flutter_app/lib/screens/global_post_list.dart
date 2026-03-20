@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/post_model.dart';
+import 'package:flutter_app/screens/post_write_screen.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/widgets/bottom_nav_bar.dart';
@@ -32,18 +33,13 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
     });
   }
 
-  // 🚀 하단 네비바 클릭 핸들러 (전체 연결 버전)
+
   void _onBottomNavTap(int index) {
-    // 1. 현재 게시판과 같은 탭을 누르면 아무것도 하지 않음
-    // (해외: 2, 국내: 3, 자유: 4 등 각 파일에 맞게 수정)
     if (index == 2) return;
 
     if (index == 0) {
-      // 2. 홈으로 갈 때 0을 반환하며 팝!
-      // (홈 화면의 await Navigator.push 결과값으로 0이 전달됨)
       Navigator.pop(context, 0);
     } else {
-      // 3. 다른 게시판/메뉴로 이동할 때는 화면을 즉시 교체 (Replacement)
       Widget nextScreen;
       switch (index) {
         case 1:
@@ -59,13 +55,10 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
           return;
       }
 
-      // 현재 화면을 새 화면으로 갈아끼우기
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => nextScreen),
       ).then((value) {
-        // 💡 만약 교체된 화면에서 사용자가 '홈'을 눌러 pop(0)이 발생하면,
-        // 그 값을 다시 부모(진짜 홈 화면)까지 전달합니다.
         if (value != null) Navigator.pop(context, value);
       });
     }
@@ -145,15 +138,22 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
         onTap: _onBottomNavTap,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => print("글쓰기"),
+        onPressed: () async {
+          final bool? isPosted = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PostWriteScreen()),
+          );
+
+          if (isPosted == true) {
+            _loadPosts();
+          }
+        },
         backgroundColor: const Color(0xFF2C2C2C),
         mini: true,
         child: const Icon(Icons.edit, color: Colors.white, size: 20),
       ),
     );
-  } // build 메서드 끝
-
-  // 🛠️ 여기서부터 아래 함수들은 모두 _MovieBoardScreenState 클래스 내부에 있어야 합니다.
+  }
 
   Widget _buildUtilityBar() {
     return Container(

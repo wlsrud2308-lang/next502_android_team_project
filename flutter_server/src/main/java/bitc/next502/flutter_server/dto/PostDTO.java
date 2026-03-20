@@ -1,10 +1,7 @@
 package bitc.next502.flutter_server.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonProperty; // 👈 추가
+import lombok.*;
 
 @Getter
 @Setter
@@ -18,9 +15,9 @@ public class PostDTO {
     private String title;
     private String content;
     private String authorName;
-    private int viewCnt;
-    private int likeCnt;
-    private int commentCnt;
+    private Integer viewCnt;
+    private Integer likeCnt;
+    private Integer commentCnt;
     private String createdAt;
     private int userNum;
 }

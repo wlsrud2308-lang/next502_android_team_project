@@ -50,6 +50,7 @@ class _PostEditScreenState extends State<PostEditScreen> {
       userNum: widget.post.userNum,
       title: title,
       content: content,
+      category: widget.post.category,
       authorName: widget.post.authorName,
       viewCnt: widget.post.viewCnt,
       likeCnt: widget.post.likeCnt,
