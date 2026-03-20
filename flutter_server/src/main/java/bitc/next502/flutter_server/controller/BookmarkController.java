@@ -1,6 +1,7 @@
 package bitc.next502.flutter_server.controller;
 
 import bitc.next502.flutter_server.dto.BookmarkDTO;
+import bitc.next502.flutter_server.dto.MoviesDTO;
 import bitc.next502.flutter_server.service.BookmarkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,5 +28,10 @@ public class BookmarkController {
     @GetMapping("/{userNum}")
     public List<Integer> getMyBookmarks(@PathVariable int userNum) {
         return bookmarkService.getMovieIdsByUser(userNum);
+    }
+
+    @GetMapping("/details/{userNum}")
+    public List<MoviesDTO> getBookmarkDetails(@PathVariable int userNum) {
+        return bookmarkService.getBookmarkDetails(userNum);
     }
 }

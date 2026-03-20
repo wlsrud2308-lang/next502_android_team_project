@@ -1,6 +1,8 @@
 package bitc.next502.flutter_server.service;
 
 import bitc.next502.flutter_server.dto.BookmarkDTO;
+import bitc.next502.flutter_server.dto.MoviesDTO;
+
 import java.util.List;
 
 public interface BookmarkService {
@@ -16,4 +18,6 @@ public interface BookmarkService {
      * (Flutter 앱 시작 시 하트/별 아이콘 색칠용)
      */
     List<Integer> getMovieIdsByUser(int userNum);
+
+    List<MoviesDTO> getBookmarkDetails(int userNum);
 }

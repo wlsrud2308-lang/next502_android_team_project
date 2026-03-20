@@ -1,6 +1,7 @@
 package bitc.next502.flutter_server.service;
 
 import bitc.next502.flutter_server.dto.BookmarkDTO;
+import bitc.next502.flutter_server.dto.MoviesDTO;
 import bitc.next502.flutter_server.mapper.BookmarkMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,5 +38,10 @@ public class BookmarkServiceImpl implements BookmarkService {
     @Transactional(readOnly = true)
     public List<Integer> getMovieIdsByUser(int userNum) {
         return bookmarkMapper.getMovieIdsByUser(userNum);
+    }
+
+    @Override
+    public List<MoviesDTO> getBookmarkDetails(int userNum) {
+        return bookmarkMapper.selectBookmarkDetailsByUser(userNum);
     }
 }

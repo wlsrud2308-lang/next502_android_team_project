@@ -1,6 +1,7 @@
 package bitc.next502.flutter_server.mapper;
 
 import bitc.next502.flutter_server.dto.BookmarkDTO;
+import bitc.next502.flutter_server.dto.MoviesDTO;
 import org.apache.ibatis.annotations.Mapper;
 import java.util.List;
 
@@ -18,4 +19,6 @@ public interface BookmarkMapper {
 
     // 4. 유저별 북마크한 모든 영화 ID 리스트 조회
     List<Integer> getMovieIdsByUser(int userNum);
+
+    List<MoviesDTO> selectBookmarkDetailsByUser(int userNum);
 }
