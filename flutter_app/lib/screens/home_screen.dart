@@ -127,25 +127,25 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   //   );
   // }
 
-  Widget _boxOfficeTile(String title, String rate) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(color: Colors.white.withOpacity(0.05)),
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(rate,
-              style: const TextStyle(
-                  fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
+  // Widget _boxOfficeTile(String title, String rate) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 18),
+  //     decoration: BoxDecoration(
+  //       border: Border(
+  //         right: BorderSide(color: Colors.white.withOpacity(0.05)),
+  //       ),
+  //     ),
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: [
+  //         Text(title,
+  //             style: const TextStyle(
+  //                 fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+  //         Text(rate,
+  //             style: const TextStyle(
+  //                 fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold)),
+  //       ],
+  //     ),
+  //   );
+  // }
 }
