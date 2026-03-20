@@ -100,7 +100,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       ),
       body: Column(
         children: [
-          _buildBoxOfficeBar(),
+          // _buildBoxOfficeBar(),
           Expanded(child: PopularPosts()),
         ],
       ),
@@ -111,21 +111,21 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  Widget _buildBoxOfficeBar() {
-    return Container(
-      height: 55,
-      color: const Color(0xFF1A1A1A),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _boxOfficeTile("파묘", "45.2%"),
-          _boxOfficeTile("듄: 파트2", "30.1%"),
-          _boxOfficeTile("웡카", "12.5%"),
-          _boxOfficeTile("가여운 것들", "5.8%"),
-        ],
-      ),
-    );
-  }
+  // Widget _buildBoxOfficeBar() {
+  //   return Container(
+  //     height: 55,
+  //     color: const Color(0xFF1A1A1A),
+  //     child: ListView(
+  //       scrollDirection: Axis.horizontal,
+  //       children: [
+  //         _boxOfficeTile("파묘", "45.2%"),
+  //         _boxOfficeTile("듄: 파트2", "30.1%"),
+  //         _boxOfficeTile("웡카", "12.5%"),
+  //         _boxOfficeTile("가여운 것들", "5.8%"),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _boxOfficeTile(String title, String rate) {
     return Container(
