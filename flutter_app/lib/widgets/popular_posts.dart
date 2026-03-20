@@ -3,14 +3,14 @@ import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/models/post_model.dart';
 
-class PopularPostsWidget extends StatefulWidget {
-  const PopularPostsWidget({super.key});
+class PopularPosts extends StatefulWidget {
+  const PopularPosts({super.key});
 
   @override
-  State<PopularPostsWidget> createState() => _PopularPostsWidgetState();
+  State<PopularPosts> createState() => _PopularPostsState();
 }
 
-class _PopularPostsWidgetState extends State<PopularPostsWidget> {
+class _PopularPostsState extends State<PopularPosts> {
   final PostService _postService = PostServiceImpl();
 
   late Future<List<PostDto>> _posts;

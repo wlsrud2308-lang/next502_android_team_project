@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/models/post_model.dart';
+import 'package:flutter_app/screens/global_post_list.dart';
 import 'package:flutter_app/service/post_service.dart';
 import 'package:flutter_app/service/post_service_impl.dart';
 import 'package:flutter_app/widgets/bottom_nav_bar.dart';
 import 'detail_screen.dart';
 import 'domestic_screen.dart';
-import 'free_screen.dart';
 import 'movie_info.dart';
 
-class MovieBoardScreen extends StatefulWidget {
-  const MovieBoardScreen({super.key});
+class FreeBoardScreen extends StatefulWidget {
+  const FreeBoardScreen({super.key});
 
   @override
-  State<MovieBoardScreen> createState() => _MovieBoardScreenState();
+  State<FreeBoardScreen> createState() => _FreeBoardScreen();
 }
 
-class _MovieBoardScreenState extends State<MovieBoardScreen> {
+class _FreeBoardScreen extends State<FreeBoardScreen> {
   final PostService _postService = PostServiceImpl();
   late Future<List<PostDto>> _postsFuture;
   String _currentSort = "최신순";
@@ -28,7 +28,7 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
 
   void _loadPosts() {
     setState(() {
-      _postsFuture = _postService.getPostsByBoard("해외");
+      _postsFuture = _postService.getPostsByBoard("자유");
     });
   }
 
@@ -36,7 +36,7 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
   void _onBottomNavTap(int index) {
     // 1. 현재 게시판과 같은 탭을 누르면 아무것도 하지 않음
     // (해외: 2, 국내: 3, 자유: 4 등 각 파일에 맞게 수정)
-    if (index == 2) return;
+    if (index == 4) return;
 
     if (index == 0) {
       // 2. 홈으로 갈 때 0을 반환하며 팝!
@@ -52,8 +52,8 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
         case 3:
           nextScreen = const DomesticMovieBoardScreen();
           break;
-        case 4:
-          nextScreen = const FreeBoardScreen();
+        case 2:
+          nextScreen = const MovieBoardScreen();
           break;
         default:
           return;
@@ -93,7 +93,7 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text("해외영화", style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text("자유게시판", style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -141,7 +141,7 @@ class _MovieBoardScreenState extends State<MovieBoardScreen> {
         ],
       ),
       bottomNavigationBar: BottomNavBar(
-        selectedIndex: 2,
+        selectedIndex: 4,
         onTap: _onBottomNavTap,
       ),
       floatingActionButton: FloatingActionButton(

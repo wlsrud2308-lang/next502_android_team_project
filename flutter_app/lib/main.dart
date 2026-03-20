@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_app/screens/detail_screen.dart';
 import 'package:flutter_app/screens/home_screen.dart';
 import 'package:flutter_app/screens/login_screen.dart';
-import 'package:flutter_app/screens/movie_detail2.dart';
 import 'package:flutter_app/screens/movie_info.dart';
 import 'package:flutter_app/widgets/movie_list_page.dart';
 import 'firebase_options.dart';
