@@ -27,7 +27,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   void initState() {
     super.initState();
     movieFuture = fetchMovie(widget.movieId);
-    _loadUserInfo(); // 2. 페이지 시작 시 유저 정보 불러오기
   }
 
   // 3. 서버에서 내 정보를 가져오는 함수 추가
@@ -77,7 +76,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               "출연 배우",
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 12),
@@ -98,9 +97,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                         backgroundImage: cast['profile_path'] != null
                             ? NetworkImage("https://image.tmdb.org/t/p/w200${cast['profile_path']}")
                             : null,
-                        backgroundColor: Colors.grey[800],
+                        backgroundColor: Colors.grey[200],
                         child: cast['profile_path'] == null
-                            ? const Icon(Icons.person, color: Colors.white24)
+                            ? const Icon(Icons.person, color: Colors.black12)
                             : null,
                       ),
                       const SizedBox(height: 8),
@@ -108,13 +107,13 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                         cast['name'] ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: const TextStyle(color: Colors.black, fontSize: 12),
                       ),
                       Text(
                         cast['character'] ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white38, fontSize: 10),
+                        style: const TextStyle(color: Colors.black38, fontSize: 10),
                       ),
                     ],
                   ),
@@ -147,19 +146,19 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             backgroundImage: director['profile_path'] != null
                 ? NetworkImage("https://image.tmdb.org/t/p/w200${director['profile_path']}")
                 : null,
-            backgroundColor: Colors.grey[800],
+            backgroundColor: Colors.grey[200],
             child: director['profile_path'] == null
-                ? const Icon(Icons.person, color: Colors.white24)
+                ? const Icon(Icons.person, color: Colors.black12)
                 : null,
           ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("감독", style: TextStyle(color: Colors.white38, fontSize: 12)),
+              const Text("감독", style: TextStyle(color: Colors.black38, fontSize: 12)),
               Text(
                 director['name'] ?? '',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -175,18 +174,18 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            backgroundColor: Color(0xFF0D0D0D),
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: Colors.white,
+            body: Center(child: CircularProgressIndicator(color: Colors.deepPurple)),
           );
         }
 
         if (snapshot.hasError) {
           return Scaffold(
-            backgroundColor: const Color(0xFF0D0D0D),
+            backgroundColor: Colors.white,
             body: Center(
               child: Text(
                 "영화 정보 불러오기 실패: ${snapshot.error}",
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.black87),
               ),
             ),
           );
@@ -199,11 +198,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         final voteAverage = movie['voteAverage'] ?? movie['vote_average'];
 
         return Scaffold(
-          backgroundColor: const Color(0xFF0D0D0D),
+          backgroundColor: Colors.white,
           appBar: AppBar(
-            backgroundColor: const Color(0xFF0D0D0D),
+            backgroundColor: Colors.white,
             elevation: 0,
-            iconTheme: const IconThemeData(color: Colors.white),
+            iconTheme: const IconThemeData(color: Colors.black),
           ),
           body: SingleChildScrollView(
             child: Column(
@@ -228,7 +227,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   height: 240,
                   color: Colors.grey[900],
                   child: const Center(
-                    child: Icon(Icons.movie, color: Colors.white24, size: 60),
+                    child: Icon(Icons.movie, color: Colors.black12, size: 60),
                   ),
                 ),
                 // 제목 + 날짜 전체
@@ -240,12 +239,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                       Text(
                         movie['title'] ?? "제목 없음",
                         style: const TextStyle(
-                            color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                            color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         releaseDate ?? "날짜 미상",
-                        style: const TextStyle(color: Colors.white38, fontSize: 16),
+                        style: const TextStyle(color: Colors.black38, fontSize: 16),
                       ),
                     ],
                   ),
@@ -256,14 +255,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                        color: const Color(0xFF141414),
+                        color: Colors.grey[100],
                         borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         Column(
                           children: [
-                            const Text("평점", style: TextStyle(color: Colors.white24, fontSize: 11)),
+                            const Text("평점", style: TextStyle(color: Colors.purple, fontSize: 11)),
                             const SizedBox(height: 6),
                             Text(
                               voteAverage != null ? voteAverage.toString() : "0.0",
@@ -276,7 +275,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                         ),
                         Column(
                           children: [
-                            const Text("상영시간", style: TextStyle(color: Colors.white24, fontSize: 11)),
+                            const Text("상영시간", style: TextStyle(color: Colors.blue, fontSize: 11)),
                             const SizedBox(height: 6),
                             Text(
                               movie['runtime'] != null ? "${movie['runtime']}분" : "정보 없음",
@@ -289,7 +288,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                         ),
                         Column(
                           children: [
-                            const Text("인기도", style: TextStyle(color: Colors.white24, fontSize: 11)),
+                            const Text("인기도", style: TextStyle(color: Colors.orange, fontSize: 11)),
                             const SizedBox(height: 6),
                             Text(
                               movie['popularity']?.toString() ?? "0",
@@ -310,7 +309,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     movie['overview'] ?? "줄거리 정보 없음",
-                    style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                    style: const TextStyle(color: Colors.black87, fontSize: 14, height: 1.5),
                   ),
                 ),
                 // 배우 / 감독
@@ -329,7 +328,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     child: Center(
                       child: Text(
                         "로그인 정보를 확인 중이거나 로그인이 필요합니다.",
-                        style: TextStyle(color: Colors.white38),
+                        style: TextStyle(color: Colors.black38),
                       ),
                     ),
                   ),

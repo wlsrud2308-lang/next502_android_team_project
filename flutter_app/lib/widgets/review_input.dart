@@ -115,7 +115,7 @@ class _ReviewInputState extends State<ReviewInput> {
         children: [
           const Text(
             "리뷰 작성",
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           RatingBar(
@@ -139,13 +139,13 @@ class _ReviewInputState extends State<ReviewInput> {
           const SizedBox(height: 8),
           TextField(
             controller: _contentController,
-            maxLines: 3,
-            style: const TextStyle(color: Colors.white),
+            maxLines: 1,
+            style: const TextStyle(color: Colors.black),
             decoration: InputDecoration(
               filled: true,
-              fillColor: const Color(0xFF141414),
+              fillColor: Colors.grey[100],
               hintText: "리뷰 내용을 입력하세요",
-              hintStyle: const TextStyle(color: Colors.white38),
+              hintStyle: const TextStyle(color: Colors.black38),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
@@ -154,6 +154,12 @@ class _ReviewInputState extends State<ReviewInput> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : _submitReview,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
               child: _isSubmitting
                   ? const SizedBox(
                 width: 16, height: 16,

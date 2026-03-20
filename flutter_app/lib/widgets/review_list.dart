@@ -100,10 +100,10 @@ class _ReviewListState extends State<ReviewList> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF141414),
+          backgroundColor: Colors.white,
           title: const Text(
             "리뷰 수정",
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
           content: StatefulBuilder(
             builder: (context, setDialogState) {
@@ -130,10 +130,16 @@ class _ReviewListState extends State<ReviewList> {
                   TextField(
                     controller: controller,
                     maxLines: 3,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: "리뷰 내용을 입력하세요",
-                      hintStyle: TextStyle(color: Colors.white38),
+                    style: const TextStyle(color: Colors.black),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.grey[100], // 아주 연한 회색 배경
+                      hintText: "내용을 입력하세요",
+                      hintStyle: const TextStyle(color: Colors.black38),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
                     ),
                   ),
                 ],
@@ -187,7 +193,7 @@ class _ReviewListState extends State<ReviewList> {
             child: Center(
               child: Text(
                 "리뷰 불러오기 실패",
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.black54),
               ),
             ),
           );
@@ -202,7 +208,7 @@ class _ReviewListState extends State<ReviewList> {
             child: Center(
               child: Text(
                 "등록된 리뷰가 없습니다.",
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.black38),
               ),
             ),
           );
@@ -220,7 +226,7 @@ class _ReviewListState extends State<ReviewList> {
                     const Text(
                       "리뷰",
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Colors.black,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -229,7 +235,7 @@ class _ReviewListState extends State<ReviewList> {
                     Text(
                       "평균 ${averageRating.toStringAsFixed(1)}",
                       style: const TextStyle(
-                        color: Colors.yellowAccent,
+                        color: Colors.orangeAccent,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -244,8 +250,9 @@ class _ReviewListState extends State<ReviewList> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF141414),
+                      color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +260,7 @@ class _ReviewListState extends State<ReviewList> {
                         Text(
                           r.nickname.isEmpty ? "익명" : r.nickname,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Colors.black87,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -263,7 +270,7 @@ class _ReviewListState extends State<ReviewList> {
                           rating: r.rating,
                           itemBuilder: (context, index) => const Icon(
                             Icons.star,
-                            color: Colors.yellowAccent,
+                            color: Colors.orangeAccent,
                           ),
                           itemCount: 5,
                           itemSize: 18,
@@ -273,7 +280,7 @@ class _ReviewListState extends State<ReviewList> {
                         Text(
                           r.content,
                           style: const TextStyle(
-                            color: Colors.white70,
+                            color: Colors.black,
                             fontSize: 14,
                             height: 1.4,
                           ),
@@ -282,7 +289,7 @@ class _ReviewListState extends State<ReviewList> {
                         Text(
                           r.createdAt,
                           style: const TextStyle(
-                            color: Colors.white24,
+                            color: Colors.black26,
                             fontSize: 10,
                           ),
                         ),
