@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_app/main.dart';
 
 class ReviewInput extends StatefulWidget {
-  final int userNum;
   final int movieId;
   final VoidCallback onReviewSubmitted;
 
   const ReviewInput({
     super.key,
-    required this.userNum,
     required this.movieId,
     required this.onReviewSubmitted,
   });
@@ -35,9 +34,9 @@ class _ReviewInputState extends State<ReviewInput> {
   Future<void> _submitReview() async {
     final currentUser = FirebaseAuth.instance.currentUser;
 
-    if (currentUser == null) {
+    if (currentUser == null || sessionUserNum == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("로그인이 필요합니다")),
+        const SnackBar(content: Text("사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.")),
       );
       return;
     }
@@ -59,7 +58,7 @@ class _ReviewInputState extends State<ReviewInput> {
       final res = await _dio.post(
         "/reviews",
         data: {
-          "user_num": widget.userNum,
+          "userNum": sessionUserNum,
           "movieId": widget.movieId,
           "rating": _rating,
           "content": _contentController.text.trim(),
@@ -72,8 +71,8 @@ class _ReviewInputState extends State<ReviewInput> {
       );
 
       debugPrint("리뷰 등록 status: ${res.statusCode}");
-      debugPrint("리뷰 등록 응답: ${res.data}");
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("리뷰가 등록되었습니다!")),
       );
@@ -85,25 +84,19 @@ class _ReviewInputState extends State<ReviewInput> {
 
       widget.onReviewSubmitted();
     } on DioException catch (e) {
-      debugPrint("리뷰 등록 Dio 오류");
-      debugPrint("요청 URL: ${e.requestOptions.uri}");
-      debugPrint("상태 코드: ${e.response?.statusCode}");
-      debugPrint("응답 데이터: ${e.response?.data}");
-      debugPrint("에러 메시지: ${e.message}");
-
+      debugPrint("리뷰 등록 오류: ${e.response?.data}");
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("리뷰 등록 실패")),
       );
     } catch (e) {
-      debugPrint("리뷰 등록 일반 오류: $e");
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("리뷰 등록 실패")),
-      );
+      debugPrint("일반 오류: $e");
     } finally {
-      setState(() {
-        _isSubmitting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -122,11 +115,7 @@ class _ReviewInputState extends State<ReviewInput> {
         children: [
           const Text(
             "리뷰 작성",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           RatingBar(
@@ -157,9 +146,7 @@ class _ReviewInputState extends State<ReviewInput> {
               fillColor: const Color(0xFF141414),
               hintText: "리뷰 내용을 입력하세요",
               hintStyle: const TextStyle(color: Colors.white38),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
           const SizedBox(height: 8),
@@ -169,12 +156,8 @@ class _ReviewInputState extends State<ReviewInput> {
               onPressed: _isSubmitting ? null : _submitReview,
               child: _isSubmitting
                   ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
+                width: 16, height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               )
                   : const Text("등록"),
             ),

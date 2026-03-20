@@ -5,6 +5,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 import '../widgets/review_input.dart';
 import '../widgets/review_list.dart';
+import 'package:flutter_app/main.dart';
 
 class MovieDetailScreen extends StatefulWidget {
   final int movieId;
@@ -317,9 +318,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 _buildDirector(movie),
                 const SizedBox(height: 16),
                 // 리뷰 작성
-                if (_myUserNum != null)
+                if (sessionUserNum != null)
                   ReviewInput(
-                    userNum: _myUserNum!,
                     movieId: widget.movieId,
                     onReviewSubmitted: refreshReviews,
                   )

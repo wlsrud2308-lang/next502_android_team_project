@@ -8,6 +8,8 @@ import 'package:flutter_app/screens/movie_info.dart';
 import 'package:flutter_app/widgets/movie_list_page.dart';
 import 'firebase_options.dart';
 
+int? sessionUserNum;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 

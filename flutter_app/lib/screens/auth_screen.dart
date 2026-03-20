@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_app/screens/movie_info.dart';
+import 'package:flutter_app/main.dart';
 
 import 'home_screen.dart';
 
@@ -97,20 +98,41 @@ class _AuthScreen extends State<AuthScreen> {
   // 로그인
   void signIn() async {
     try {
-      UserCredential user = await FirebaseAuth.instance
+      // 1. Firebase 로그인
+      UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
-      if (user.user!.emailVerified) {
+      if (userCredential.user!.emailVerified) {
         if (!mounted) return;
 
-        showToast("로그인 성공!");
+        try {
+          final response = await _dio.get('/user/${userCredential.user!.uid}');
 
-        // 로그인 성공 시 홈 화면으로 강제 이동
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const MovieHomeScreen()),
-              (route) => false,
-        );
+          // 3. 서버에서 받은 user_num을 전역 변수에 저장
+          // (main.dart 등에 선언한 int? sessionUserNum 변수를 사용합니다)
+          print("서버 응답 데이터: ${response.data}");
+
+          if (response.data is Map) {
+            sessionUserNum = response.data['userNum'];
+          }
+
+          print("최종 전역 변수 저장 값: $sessionUserNum");
+
+          if (sessionUserNum == null) {
+            showToast("유저 번호를 가져오지 못했습니다.");
+            return; // 저장 실패 시 홈으로 보내지 않음
+          }
+
+          // 4. 홈 화면으로 이동 (인자 없이 깔끔하게 이동)
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const MovieHomeScreen()),
+                (route) => false,
+          );
+        } catch (e) {
+          print("서버 정보 조회 실패: $e");
+          showToast("사용자 정보를 불러오는데 실패했습니다.");
+        }
       } else {
         showToast("이메일 인증을 완료해주세요");
       }
