@@ -48,6 +48,7 @@ class _PopularPostsState extends State<PopularPosts> {
     );
   }
 
+  // ✅ 검색창 (밝게)
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -63,29 +64,31 @@ class _PopularPostsState extends State<PopularPosts> {
             });
           });
         },
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           hintText: "검색어를 입력하세요",
-          hintStyle: const TextStyle(color: Colors.white38),
-          prefixIcon: const Icon(Icons.search, color: Colors.white38),
+          hintStyle: const TextStyle(color: Colors.black38),
+          prefixIcon: const Icon(Icons.search, color: Colors.black38),
           filled: true,
-          fillColor: const Color(0xFF1A1A1A),
+          fillColor: Colors.grey.shade100,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
           ),
         ),
       ),
     );
   }
 
+  // ✅ 정렬 드롭다운 (밝게)
   Widget _buildSortDropdown() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: DropdownButton<String>(
         value: _selectedSort,
-        dropdownColor: const Color(0xFF1A1A1A),
-        style: const TextStyle(color: Colors.white),
+        dropdownColor: Colors.white,
+        style: const TextStyle(color: Colors.black),
+        underline: const SizedBox(),
         items: <String>['조회수', '추천수', '댓글수']
             .map((e) => DropdownMenuItem(value: e, child: Text(e)))
             .toList(),
@@ -110,6 +113,7 @@ class _PopularPostsState extends State<PopularPosts> {
     );
   }
 
+  // ✅ 리스트 (밝게)
   Widget _buildPostList() {
     return FutureBuilder<List<PostDto>>(
       future: _posts,
@@ -120,7 +124,7 @@ class _PopularPostsState extends State<PopularPosts> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(
               child: Text('게시글이 없습니다.',
-                  style: TextStyle(color: Colors.white54)));
+                  style: TextStyle(color: Colors.black38)));
         } else {
           return ListView.builder(
             itemCount: snapshot.data!.length,
@@ -134,11 +138,15 @@ class _PopularPostsState extends State<PopularPosts> {
     );
   }
 
+  // ✅ 게시글 아이템 (게시판 스타일)
   Widget _buildPostItem(PostDto post) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.withOpacity(0.1)),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,9 +156,9 @@ class _PopularPostsState extends State<PopularPosts> {
             child: Text(
               post.postId.toString(),
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.orangeAccent,
+                color: Colors.orange,
               ),
             ),
           ),
@@ -158,29 +166,54 @@ class _PopularPostsState extends State<PopularPosts> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(post.title,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-                    maxLines: 2),
-                const SizedBox(height: 8),
+                Text(
+                  post.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    Text(post.category ?? '기타',
-                        style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 11)),
-                    const SizedBox(width: 10),
-                    Text(post.authorName,
-                        style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                    const SizedBox(width: 10),
-                    Text(post.createdAt,
-                        style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    Text(
+                      post.category ?? '기타',
+                      style: const TextStyle(
+                        color: Colors.blueAccent,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      post.authorName,
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      post.createdAt,
+                      style: const TextStyle(
+                        color: Colors.black38,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(width: 10),
-          Text("💬 ${post.commentCnt}",
-              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(
+            "💬 ${post.commentCnt}",
+            style: const TextStyle(
+              color: Colors.black45,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
